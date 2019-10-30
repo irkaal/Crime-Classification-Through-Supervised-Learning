@@ -1,18 +1,16 @@
 # Packages
-library(reticulate)
-library(tidyverse)
-library(styler)
+req_packages <- read_lines('./requirements.txt')
+new_packages <- req_packages[!(req_packages %in% installed.packages()[,"Package"])]
+if(length(new_packages)) install.packages(new_packages)
+invisible(lapply(req_packages, library, character.only = T))
+
 # style_file('San_francisco_crime_classification.R')
 
 # Data
-trainfile <- './data/train.csv'
-testfile <- './data/test.csv'
-if (!file.exists(trainfile) || !file.exists(testfile)) {
-  print('unzipping')
+if (!file.exists('./data/train.csv') || !file.exists('./data/test.csv')) {
   setwd('./data/')
   paths <- paste(sep = '', './data/', unzip('./sf-crime.zip', c('train.csv', 'test.csv')))
   setwd('..')
-  print('done')
 }
 
 train <- read.csv(paths[1])
