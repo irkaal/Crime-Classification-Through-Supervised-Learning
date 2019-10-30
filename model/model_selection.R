@@ -6,7 +6,7 @@ compareModels <- function(train, k, m) {
   registerDoParallel(detectCores() - 1)
   ii <- 1:nrow(train) %% k + 1
   
-  # For each 5-fold CV i, i = 1, 2, ..., m
+  # For each k-fold CV i, i = 1, 2, ..., m
   score <- foreach(i = 1:m, .packages = required_packages) %dopar% {
     # Randomize order
     ii <- sample(ii)
