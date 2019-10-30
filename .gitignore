@@ -1,4 +1,9 @@
+.Rproj.user
+.RHistory
+*.Rproj
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
 deps/deps.jl
+data/train.csv
+data/test.csv

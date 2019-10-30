@@ -2,14 +2,23 @@
 library(reticulate)
 library(tidyverse)
 library(styler)
-
-# Styler
-style_file("San_francisco_crime_classification.R")
+# style_file('San_francisco_crime_classification.R')
 
 # Data
-train <- read.csv("./data/train.csv")
+trainfile <- './data/train.csv'
+testfile <- './data/test.csv'
+if (!file.exists(trainfile) || !file.exists(testfile)) {
+  print('unzipping')
+  setwd('./data/')
+  paths <- paste(sep = '', './data/', unzip('./sf-crime.zip', c('train.csv', 'test.csv')))
+  setwd('..')
+  print('done')
+}
+
+train <- read.csv(paths[1])
 train$Id <- NA
-test <- read.csv("./data/test.csv")
+
+test <- read.csv(paths[2])
 test <- test %>%
   mutate(
     Category = NA,
@@ -18,9 +27,7 @@ test <- test %>%
   )
 crime_data <- rbind(train, test)
 
-#
 # Feature Engineering:
-#
 
 # 1. Dates
 dates_split <- unlist(str_split(crime_data$Dates, "-|[ ]|:"))
@@ -35,30 +42,16 @@ crime_data <- crime_data %>%
   )
 
 
-# 4. Encode DayOfWeek into dummy variables
-crime_data <- crime_data %>%
-  mutate(
-    Monday = ifelse(DayOfWeek == "Monday", 1, 0),
-    Tuesday = ifelse(DayOfWeek == "Tuesday", 1, 0),
-    Wednesday = ifelse(DayOfWeek == "Wednesday", 1, 0),
-    Thursday = ifelse(DayOfWeek == "Thursday", 1, 0),
-    Friday = ifelse(DayOfWeek == "Friday", 1, 0),
-    Saturday = ifelse(DayOfWeek == "Saturday", 1, 0),
-    Sunday = ifelse(DayOfWeek == "Sunday", 1, 0),
-    DayOfWeek = NULL
-  )
-
-
 # 5. PdDistrict ~ PatrolDivision
 # Patrol divisions are broken down into two divisions Golden Gate Division and Metro Division which are each led by San Francisco Police Commanders.
 # https://en.wikipedia.org/wiki/San_Francisco_Police_Department
 metro_div <- c("CENTRAL", "INGLESIDE", "NORTHERN", "SOUTHERN", "TENDERLOIN")
 golden_gate_div <- c("BAYVIEW", "MISSION", "PARK", "RICHMOND", "TARAVAL")
 crime_data <- crime_data %>%
-  mutate(PatrolDivision = case_when(
+  mutate(PatrolDivision = factor(case_when(
     PdDistrict %in% metro_div ~ "Metro",
     PdDistrict %in% golden_gate_div ~ "GoldenGate"
-  ))
+  )))
 
 
 ######
