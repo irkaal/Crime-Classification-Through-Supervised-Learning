@@ -7,3 +7,4 @@
 deps/deps.jl
 data/train.csv
 data/test.csv
+.ipynb_checkpoints/
