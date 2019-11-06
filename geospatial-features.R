@@ -38,6 +38,7 @@ crime_data <- crime_data %>%
 
 
 # 2. Geospatial
+# Formulas obtained from https://www.movable-type.co.uk/scripts/latlong.html
 
 # Polar coordinates
 crime_data <- crime_data %>%
