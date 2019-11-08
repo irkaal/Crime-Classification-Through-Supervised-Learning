@@ -1,15 +1,8 @@
 import pandas as pd
 import numpy as np
-# import matplotlib.pyplot as plt
 
 # TODO: take in a dataframe argument
-def mainClean():
-    # import CSV:
-    try:
-        dataset = pd.read_csv("./data/sf-crime/train.csv")
-    except:
-        print("Can't find csv!")
-        return
+def mainClean(dataset):
 
     # getting size of dataset: eg, (878049, 9)
     # print(dataset.shape)
@@ -25,7 +18,7 @@ def mainClean():
     # TODO: do research on events
 
     # uncomment if you want to save to csv:
-    df.to_csv('./cleanedDataset.csv')
+    # df.to_csv('./cleanedDataset.csv')
 
     print(df) # or df.head()
     return df
@@ -33,22 +26,25 @@ def mainClean():
 
 # get one hot encoding of column DayOfWeek
 def separateDayOfWeek(dataset):
+    print("Clean DayOfWeek")
     one_hot_day = pd.get_dummies(dataset['DayOfWeek'])
-    dataset = dataset.drop('DayOfWeek',axis = 1) # Drop column DayOfWeek as it is now encoded
+    dataset = dataset.drop('DayOfWeek', axis = 1) # Drop column DayOfWeek as it is now encoded
     dataset = dataset.join(one_hot_day) # Join the encoded df
     return dataset
 
 
 # get one hot encoding of column PdDistrict
 def separateDistrict(dataset):
+    print("Clean PdDistrict")
     one_hot_day = pd.get_dummies(dataset['PdDistrict'])
-    dataset = dataset.drop('PdDistrict',axis = 1) # Drop column DayOfWeek as it is now encoded
+    dataset = dataset.drop('PdDistrict', axis = 1) # Drop column DayOfWeek as it is now encoded
     dataset = dataset.join(one_hot_day) # Join the encoded df
     return dataset
 
 
 # get one hot encoding of column Date by 6 hour periods
 def separateTimeByFourPeriods(dataset):
+    print("Clean Hours")
     eighteenPeriod = [0] * len(dataset)
     twelvePeriod = [0] * len(dataset)
     sixPeriod = [0] * len(dataset)
@@ -74,6 +70,7 @@ def separateTimeByFourPeriods(dataset):
 
 # get one hot encoding of column Date by four seasons
 def separateTimeBySeasons(dataset):
+    print("Clean Seasons")
     spring = [0] * len(dataset) # spring (March, April, May)
     summer = [0] * len(dataset) # summer (June, July, August)
     autumn = [0] * len(dataset) # autumn (September, October, November)
@@ -98,4 +95,10 @@ def separateTimeBySeasons(dataset):
 
   
 if __name__== "__main__":
-  mainClean()
+    # import CSV:
+    try:
+        trainDataset = pd.read_csv("./data/sf-crime/train.csv")
+        mainClean(trainDataset) # specify a dataframe
+    except:
+        print("Can't find csv!")
+    
