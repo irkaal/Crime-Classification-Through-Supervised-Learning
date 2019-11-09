@@ -114,6 +114,6 @@ if __name__== "__main__":
     try:
         trainDataset = pd.read_csv("./data/sf-crime/train.csv")
         mainClean(trainDataset) # specify a dataframe
-    except Exception,e:
+    except Exception as e:
         # print(e)
         print("Can't find csv!")
