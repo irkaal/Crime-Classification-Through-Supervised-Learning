@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import datetime
 
 # TODO: take in a dataframe argument
 def mainClean(dataset):
@@ -50,15 +51,15 @@ def separateTimeByFourPeriods(dataset):
     sixPeriod = [0] * len(dataset)
     zeroPeriod = [0] * len(dataset)
     for i in range(0,(len(dataset))): # for each element in feature
-        elementTime = dataset['Dates'][i].split()[1]
-        elementTimeInt = int(elementTime.split(':')[0])
-        if elementTimeInt >= 18: # if time is above 18:00
+        dateObject = datetime.datetime.strptime(str(dataset['Dates'][i]), "%Y-%m-%d %H:%M")
+        dateHour = dateObject.hour
+        if dateHour >= 18: # if time is above 18:00
             eighteenPeriod[i] = 1
-        elif elementTimeInt >= 12: # else if time is above 12:00
+        elif dateHour >= 12: # else if time is above 12:00
             twelvePeriod[i] = 1
-        elif elementTimeInt >= 6: # else if time is above 6:00
+        elif dateHour >= 6: # else if time is above 6:00
             sixPeriod[i] = 1
-        elif elementTimeInt >= 0: # else if time is above 00:00
+        elif dateHour >= 0: # else if time is above 00:00
             zeroPeriod[i] = 1 
     dataset.insert(2, "18:00-23:59", eighteenPeriod, True) 
     dataset.insert(2, "12:00-17:59", twelvePeriod, True) 
@@ -76,15 +77,15 @@ def separateTimeBySeasons(dataset):
     autumn = [0] * len(dataset) # autumn (September, October, November)
     winter = [0] * len(dataset) # winter (December, January, February)
     for i in range(0,(len(dataset))): # for each element in feature
-        elementDate = dataset['Dates'][i].split()[0]
-        elementMonth = int(elementDate.split('-')[1])
-        if elementMonth >= 3 and elementMonth <= 5: # spring
+        dateObject = datetime.datetime.strptime(str(dataset['Dates'][i]), "%Y-%m-%d %H:%M")
+        dateMonth = dateObject.month
+        if dateMonth >= 3 and dateMonth <= 5: # spring
             spring[i] = 1
-        elif elementMonth >= 6 and elementMonth <= 8: # summer
+        elif dateMonth >= 6 and dateMonth <= 8: # summer
             summer[i] = 1
-        elif elementMonth >= 9 and elementMonth <= 11: # autumn
+        elif dateMonth >= 9 and dateMonth <= 11: # autumn
             autumn[i] = 1
-        elif elementMonth == 12 or elementMonth <= 2: # winter
+        elif dateMonth == 12 or dateMonth <= 2: # winter
             winter[i] = 1
     dataset.insert(2, "spring", spring, True)
     dataset.insert(2, "summer", summer, True) 
@@ -99,6 +100,5 @@ if __name__== "__main__":
     try:
         trainDataset = pd.read_csv("./data/sf-crime/train.csv")
         mainClean(trainDataset) # specify a dataframe
-    except:
+    except Exception,e:
         print("Can't find csv!")
-    
