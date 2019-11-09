@@ -51,7 +51,14 @@ def separateTimeByFourPeriods(dataset):
     sixPeriod = [0] * len(dataset)
     zeroPeriod = [0] * len(dataset)
     for i in range(0,(len(dataset))): # for each element in feature
-        dateObject = datetime.datetime.strptime(str(dataset['Dates'][i]), "%Y-%m-%d %H:%M")
+        try:
+            dateObject = datetime.datetime.strptime(str(dataset['Dates'][i]), "%Y-%m-%d %H:%M:%S")
+        except:
+            try:
+                dateObject = datetime.datetime.strptime(str(dataset['Dates'][i]), "%Y-%m-%d %H:%M") # if CSV doesn't have seconds
+            except:
+                print("Failed to encode hours")
+                return dataset
         dateHour = dateObject.hour
         if dateHour >= 18: # if time is above 18:00
             eighteenPeriod[i] = 1
@@ -77,7 +84,14 @@ def separateTimeBySeasons(dataset):
     autumn = [0] * len(dataset) # autumn (September, October, November)
     winter = [0] * len(dataset) # winter (December, January, February)
     for i in range(0,(len(dataset))): # for each element in feature
-        dateObject = datetime.datetime.strptime(str(dataset['Dates'][i]), "%Y-%m-%d %H:%M")
+        try:
+            dateObject = datetime.datetime.strptime(str(dataset['Dates'][i]), "%Y-%m-%d %H:%M:%S")
+        except:
+            try:
+                dateObject = datetime.datetime.strptime(str(dataset['Dates'][i]), "%Y-%m-%d %H:%M") # if CSV doesn't have seconds
+            except:
+                print("Failed to encode seasons")
+                return dataset
         dateMonth = dateObject.month
         if dateMonth >= 3 and dateMonth <= 5: # spring
             spring[i] = 1
@@ -101,4 +115,5 @@ if __name__== "__main__":
         trainDataset = pd.read_csv("./data/sf-crime/train.csv")
         mainClean(trainDataset) # specify a dataframe
     except Exception,e:
+        # print(e)
         print("Can't find csv!")
