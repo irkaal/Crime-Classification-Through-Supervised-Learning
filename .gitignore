@@ -5,7 +5,5 @@
 *.jl.*.cov
 *.jl.mem
 deps/deps.jl
-data/train.csv
-data/test.csv
+*.csv
 .ipynb_checkpoints/
-train_sub.csv
