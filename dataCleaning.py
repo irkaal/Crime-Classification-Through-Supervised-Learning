@@ -22,7 +22,9 @@ def mainClean(dataset):
     df = encodeDayOfMonth(df, do)
     df = encodeMonth(df, do)
     df = encodeYear(df, do)
-    df = encodeHour(df, do) 
+    df = encodeHour(df, do)
+    df = encodeAddress(df)
+    df = dropDescRes(df) 
     # TODO: keep holiday (1 or 0) (parse all holidays)
     # TODO: do research on events
 
@@ -159,8 +161,20 @@ def encodeHour(dataset, dateObjects):
     dataset['Hour'] = [d.hour + d.minute / 60 for d in dateObjects]
     dataset = encodeCyclic(dataset, 'Hour', 24)
     dataset = dataset.drop('Dates', axis = 1) # drop column Dates as it is now encoded
-    return(dataset)
+    return dataset
 
+
+# Binary encoding for Address Type
+def encodeAddress(dataset):
+    dataset['Intersection'] = [int('/' in a) for a in dataset['Address']]
+    dataset = dataset.drop('Address', axis = 1)
+    return dataset
+
+
+def dropDescRes(dataset):
+    dataset = dataset.drop('Descript', axis = 1)
+    dataset = dataset.drop('Resolution', axis = 1)
+    return dataset
 
 # if __name__== "__main__":
     # import CSV:
