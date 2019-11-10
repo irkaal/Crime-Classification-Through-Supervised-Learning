@@ -10,50 +10,39 @@ def mainClean(dataset):
     print('Cleaning...', flush = True)
 
     df = pd.DataFrame(dataset)
-    updateProgress(1)
     df = dropDescRes(df) 
-    updateProgress(2)
     df = separateDistrict(df) # data clean district
     df = separateDayOfWeek(df) # data clean days of week
-    updateProgress(3)
     df = encodeAddress(df)
-    updateProgress(4)
     try:
         dates = getDateObjects(df)
-        updateProgress(5)
         df = df.drop('Dates', axis = 1)
     except:
-        print('Unable to retrieve dates')
+        updateProgress(13, 'Done')
+        print(f'\nElapsed time: {time.time() - tic} seconds', flush = True)
         return df
-    updateProgress(6)
     df = separateTimeByFourPeriods(df, dates) # data clean by time of the day
     df = separateTimeBySeasons(df, dates) # data clean by seasons
-    updateProgress(7)
     df = encodeDayOfYear(df, dates)
     df = encodeDayOfMonth(df, dates)
-    updateProgress(8)
     df = encodeMonth(df, dates)
     df = encodeYear(df, dates)
     df = encodeHour(df, dates)
-    updateProgress(9)
     # TODO: keep holiday (1 or 0) (parse all holidays)
     # TODO: do research on events
-    updateProgress(10)
 
-    # uncomment if you want to save to csv:
-    # df.to_csv('./cleanedDataset.csv')
-
-    print(f'\nFinished in {time.time() - tic} seconds.', flush = True)
+    updateProgress(13, 'Done')
+    print(f'\nElapsed time: {time.time() - tic} seconds', flush = True)
     return df
 
 
-def updateProgress(i):
-    sys.stdout.write('\r')
-    sys.stdout.write("[%-50s] %d%%" % ('=====' * i, 10 * i))
+def updateProgress(i, task):
+    sys.stdout.write('\r[%-52s] %d%% (%s)%s' % ('====' * i, 100 / 13 * i, task, ' ' * (36 - len(task))))
     sys.stdout.flush()
 
 
 def dropDescRes(dataset):
+    updateProgress(1, 'Drop Descript and Resolution columns')
     if 'Descript' in dataset:
         dataset = dataset.drop('Descript', axis = 1)
     if 'Resolution' in dataset:
@@ -63,6 +52,7 @@ def dropDescRes(dataset):
 
 # get one hot encoding of column PdDistrict
 def separateDistrict(dataset):
+    updateProgress(2, 'Encoding PdDistrict')
     if 'PdDistrict' in dataset:
         one_hot_day = pd.get_dummies(dataset['PdDistrict'])
         dataset = dataset.drop('PdDistrict', axis = 1) # Drop column PdDistrict as it is now encoded
@@ -81,6 +71,7 @@ def encodeCyclic(dataset, colName, maxVal):
 
 # get one hot encoding of column DayOfWeek
 def separateDayOfWeek(dataset):
+    updateProgress(3, 'Encoding DayOfWeek')
     if 'DayOfWeek' in dataset:
         days = {'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3, 'Friday': 4, 'Saturday': 5, 'Sunday': 6}
         dataset['DayOfWeek'] = [days[d] for d in dataset['DayOfWeek']]
@@ -90,6 +81,7 @@ def separateDayOfWeek(dataset):
 
 # Binary encoding for Address Type
 def encodeAddress(dataset):
+    updateProgress(4, 'Encoding Address')
     if 'Address' in dataset:
         dataset['Intersection'] = [int('/' in a) for a in dataset['Address']]
         dataset = dataset.drop('Address', axis = 1)
@@ -97,6 +89,7 @@ def encodeAddress(dataset):
 
 
 def getDateObjects(dataset):
+    updateProgress(5, 'Retrieving Dates')
     try:
         dateObjects = [datetime.datetime(*map(int, [d[:4], d[5:7], d[8:10], d[11:13], d[14:16]])) for d in dataset['Dates']]
     except:
@@ -106,6 +99,7 @@ def getDateObjects(dataset):
 
 # get one hot encoding of column Date by 6 hour periods
 def separateTimeByFourPeriods(dataset, dateObjects):
+    updateProgress(6, 'Encoding 6-Hour Period')
     n = len(dataset)
     zeros = [0] * n
     eighteenPeriod = zeros
@@ -131,6 +125,7 @@ def separateTimeByFourPeriods(dataset, dateObjects):
 
 # get one hot encoding of column Date by four seasons
 def separateTimeBySeasons(dataset, dateObjects):
+    updateProgress(7, 'Encoding Season')
     n = len(dataset)
     zeros = [0] * n
     spring = zeros # spring (March, April, May)
@@ -156,6 +151,7 @@ def separateTimeBySeasons(dataset, dateObjects):
 
 # Cyclic encoding for Day of Year
 def encodeDayOfYear(dataset, dateObjects):
+    updateProgress(8, 'Encoding DayOfYear')
     dataset['DayOfYear'] = [d.toordinal() - datetime.date(d.year, 1, 1).toordinal() + 1 for d in dateObjects]
     dataset = encodeCyclic(dataset, 'DayOfYear', 365)
     return dataset
@@ -163,6 +159,7 @@ def encodeDayOfYear(dataset, dateObjects):
 
 # Cyclic encoding for Day of Month
 def encodeDayOfMonth(dataset, dateObjects):
+    updateProgress(9, 'Encoding DayOfMonth')
     dataset['DayOfMonth'] = [d.day for d in dateObjects]
     dataset = encodeCyclic(dataset, 'DayOfMonth', 31)
     return dataset
@@ -170,6 +167,7 @@ def encodeDayOfMonth(dataset, dateObjects):
 
 # Cyclic encoding for Month
 def encodeMonth(dataset, dateObjects):
+    updateProgress(10, 'Encoding Month')
     dataset['Month'] = [d.month for d in dateObjects]
     dataset = encodeCyclic(dataset, 'Month', 12)
     return dataset
@@ -177,6 +175,7 @@ def encodeMonth(dataset, dateObjects):
 
 # One-hot encoding for Year
 def encodeYear(dataset, dateObjects):
+    updateProgress(11, 'Encoding Year')
     dataset['Year'] = [d.year for d in dateObjects]
     one_hot_year = pd.get_dummies(dataset['Year'])
     dataset = dataset.drop('Year', axis = 1) # Drop column Year as it is now encoded
@@ -186,17 +185,17 @@ def encodeYear(dataset, dateObjects):
 
 # Cyclic encoding for Hour + Minute / 60
 def encodeHour(dataset, dateObjects):
+    updateProgress(12, 'Encoding Hour')
     dataset['Hour'] = [d.hour + d.minute / 60 for d in dateObjects]
     dataset = encodeCyclic(dataset, 'Hour', 24)
     return dataset
 
 
 # if __name__== "__main__":
-#     import CSV:
+#     # import CSV:
 #     try:
-#         trainDataset = pd.read_csv("./data/sf-crime/train.csv")
+#         trainDataset = pd.read_csv('./data/train.csv')
 #         mainClean(trainDataset) # specify a dataframe
 #     except Exception as e:
 #         print(e)
 #         print("Can't find csv!")
-

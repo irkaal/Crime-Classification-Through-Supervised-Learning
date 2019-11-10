@@ -31,6 +31,9 @@ handleOutliers <- function(dataset) {
   outlier_filter <- filter_X | filter_Y
   outlier <- dataset[outlier_filter, ]
   
+  # Return if no outliers found
+  if (!nrow(outlier)) return(dataset)
+  
   #
   # 1st Pass (Use matching address coordinates)
   #
