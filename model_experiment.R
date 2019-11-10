@@ -24,13 +24,14 @@ source_python('./dataCleaning.py')
 
 path <- unzip('./data/sf-crime.zip', 'train.csv')
 crime_data <- fread(path); invisible(file.remove(path))
-crime_data <- mainClean(crime_data)
 crime_data <- encodeGeospatial(crime_data)
+crime_data <- data.table(mainClean(crime_data))
 str(crime_data)
 
 # Split data.table into data matrix and response vector
-train_data <- mltools::sparsify(data.table(crime_data[, -1]))
-train_label <- as.numeric(factor(crime_data$Category))
+train_data <- mltools::sparsify(crime_data[, -1])
+train_label_num <- as.numeric(factor(crime_data$Category)) - 1
+train_label <- factor(make.names(train_label_num))
 
 
 ####################
@@ -47,9 +48,9 @@ set.seed(2019)
 
 
 # Direct (No Tuning, only nrounds)
-dtrain <- xgb.DMatrix(data = train_data, label = train_label)
+dtrain <- xgb.DMatrix(data = train_data, label = train_label_num)
 bst <- xgboost(data = dtrain, booster = 'gbtree', objective = 'multi:softmax', num_class = 39, 
-               eval_metric = 'mlogloss', nrounds = 50)
+               eval_metric = 'mlogloss', nrounds = 20)
 pred <- predict(bst, train_data)
 
 # Caret
@@ -65,7 +66,7 @@ xgbGrid <- expand.grid(max_depth = c(6),
                        colsample_bytree = 1,
                        min_child_weight = 1,
                        subsample = c(0.5, 1))
-xgbModel <- train(x = train_data, y = factor(make.names(train_label)),
+xgbModel <- train(x = train_data, y = train_label,
                   method = 'xgbTree', metric = "logLoss", 
                   trControl = xgbControl, tuneGrid = xgbGrid)
 print(xgbModel)
@@ -89,7 +90,7 @@ gbmGrid <- expand.grid(ntrees = 50,
                        min_rows = c(10), 
                        learn_rate = c(0.1), 
                        col_sample_rate = c(1))
-gbmModel <- train(x = h2o_train, y = factor(make.names(train_label)),
+gbmModel <- train(x = h2o_train, y = train_label,
                   method = 'gbm_h2o', metric = "logLoss", 
                   trControl = gbmControl, tuneGrid = gbmGrid)
 print(gbmModel)
