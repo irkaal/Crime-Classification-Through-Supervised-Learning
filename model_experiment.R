@@ -11,11 +11,9 @@ loadPackages(c(
   'foreach', 'parallel', 'doParallel',       # For parallelization
   'reticulate'                               # Python interface
 ))
-
-# Setup
-h2o.init()
-options("h2o.use.data.table" = T)
 registerDoParallel(detectCores() / 2)
+h2o.init(); options("h2o.use.data.table" = T)
+source('./geospatial.R')
 source_python('./dataCleaning.py')
 
 
@@ -26,11 +24,12 @@ source_python('./dataCleaning.py')
 
 path <- unzip('./data/sf-crime.zip', 'train.csv')
 crime_data <- fread(path); invisible(file.remove(path))
-crime_data <- data.table(mainClean(crime_data))
+crime_data <- mainClean(crime_data)
+crime_data <- encodeGeospatial(crime_data)
 str(crime_data)
 
 # Split data.table into data matrix and response vector
-train_data <- mltools::sparsify(crime_data[, -1])
+train_data <- mltools::sparsify(data.table(crime_data[, -1]))
 train_label <- as.numeric(factor(crime_data$Category))
 
 

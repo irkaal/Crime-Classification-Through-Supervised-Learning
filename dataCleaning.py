@@ -21,7 +21,7 @@ def mainClean(dataset):
     try:
         dates = getDateObjects(df)
         updateProgress(5)
-        dataset = dataset.drop('Dates', axis = 1)
+        df = df.drop('Dates', axis = 1)
     except:
         print('Unable to retrieve dates')
         return df
