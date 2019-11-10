@@ -1,41 +1,22 @@
+
 ############################
 # Load Libraries and Setup #
 ############################
 
 
-# install.packages(c('data.table', 'Matrix', 'mltools', 'caret', 'xgboost', 'h2o', 'foreach', 'parallel', 'doParallel'))
+source('./misc.R')
+loadPackages(c(
+  'data.table', 'slam', 'Matrix', 'mltools', # For performance boost
+  'caret', 'xgboost', 'h2o',                 # For parameter tuning, H2O (http://h2o-release.s3.amazonaws.com/h2o/rel-yau/10/index.html)
+  'foreach', 'parallel', 'doParallel',       # For parallelization
+  'reticulate'                               # Python interface
+))
 
-# For performance boost
-library(data.table)
-library(Matrix)
-library(mltools)
-
-# For parameter tuning
-library(caret)
-library(xgboost)
-# For setting up H2O (http://h2o-release.s3.amazonaws.com/h2o/rel-yau/10/index.html)
-# H2O requires Java 64-Bit
-if ("package:h2o" %in% search()) { detach("package:h2o", unload=TRUE) }
-if ("h2o" %in% rownames(installed.packages())) { remove.packages("h2o") }
-pkgs <- c("RCurl","jsonlite")
-for (pkg in pkgs) {
-  if (! (pkg %in% rownames(installed.packages()))) { install.packages(pkg) }
-}
-install.packages("h2o", type="source", repos="http://h2o-release.s3.amazonaws.com/h2o/rel-yau/10/R")
-library(h2o)
+# Setup
 h2o.init()
-
-# For parallelization
-library(foreach)
-library(parallel)
-library(doParallel)
-registerDoParallel(detectCores() - 1)
-
-# For sourcing python files
-# library(reticulate)
-# source_python('./dataCleaning.py')
-
-set.seed(2019)
+options("h2o.use.data.table" = T)
+registerDoParallel(detectCores() / 2)
+source_python('./dataCleaning.py')
 
 
 #################
@@ -43,25 +24,22 @@ set.seed(2019)
 #################
 
 
-# crime_data <- read.csv(unz('./data/sf-crime.zip', 'train.csv'))
-# crime_data <- mainClean(crime_data)
-# write.csv(crime_data, './train_clean.csv', row.names = F)
-
-
-#####################
-# Load Cleaned Data #
-#####################
-
-
-path <- unzip('./data/sf-crime-clean.zip', 'train_clean.csv')
+path <- unzip('./data/sf-crime.zip', 'train.csv')
 crime_data <- fread(path); invisible(file.remove(path))
-
-# Structure of data.table
+crime_data <- data.table(mainClean(crime_data))
 str(crime_data)
 
 # Split data.table into data matrix and response vector
-train_data <- sparsify(crime_data[, -1])
-train_label <- as.numeric(crime_data$Category)
+train_data <- mltools::sparsify(crime_data[, -1])
+train_label <- as.numeric(factor(crime_data$Category))
+
+
+####################
+# Parameter Tuning #
+####################
+
+
+set.seed(2019)
 
 
 ##########################
@@ -71,9 +49,8 @@ train_label <- as.numeric(crime_data$Category)
 
 # Direct (No Tuning, only nrounds)
 dtrain <- xgb.DMatrix(data = train_data, label = train_label)
-bst <- xgb.train(data = dtrain, booster = 'gbtree',
-                 objective = 'multi:softmax', num_class = 39, eval_metric = 'mlogloss',
-                 nrounds = 1)
+bst <- xgboost(data = dtrain, booster = 'gbtree', objective = 'multi:softmax', num_class = 39, 
+               eval_metric = 'mlogloss', nrounds = 50)
 pred <- predict(bst, train_data)
 
 # Caret
@@ -101,7 +78,7 @@ pred <- predict(xgbModel, train_data)
 #############
 
 
-h2otrain <- as.h2o(crime_data[, -1])
+h2o_train <- as.h2o(crime_data[, -1])
 gbmControl <- trainControl(method = 'none')
 gbmControl <- trainControl(method = 'repeatedcv', number = 10, repeats = 10,
                            allowParallel = T,
@@ -113,16 +90,10 @@ gbmGrid <- expand.grid(ntrees = 50,
                        min_rows = c(10), 
                        learn_rate = c(0.1), 
                        col_sample_rate = c(1))
-gbmModel <- train(x = h2otrain, y = factor(make.names(train_label)),
+gbmModel <- train(x = h2o_train, y = factor(make.names(train_label)),
                   method = 'gbm_h2o', metric = "logLoss", 
                   trControl = gbmControl, tuneGrid = gbmGrid)
 print(gbmModel)
 pred <- predict(gbmModel, train_data)
+mean(train_data$Category == pred)
 
-
-############
-# LightGBM #
-############
-
-
-# TODO: Setup
