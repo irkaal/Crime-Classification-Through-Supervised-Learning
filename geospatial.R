@@ -1,7 +1,7 @@
 
 
 encodeGeospatial <- function(dataset) {
-  source('./misc.R')
+  source('misc.R')
   loadPackages('dplyr')
 
   dataset <- encodePatrolDiv(dataset)

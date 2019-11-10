@@ -1,52 +1,43 @@
-
-
-#########
-# Setup #
-#########
-
-
-source('./misc.R')
+# Setup
+source('misc.R')
+source('pre_process.R')
 loadPackages(c(
   'data.table', 'slam', 'Matrix', 'mltools',  # For performance boost
   'caret', 'xgboost', 'h2o',                  # For parameter tuning, H2O (http://h2o-release.s3.amazonaws.com/h2o/rel-yau/10/index.html)
-  'foreach', 'parallel', 'doParallel',        # For parallelization
-  'reticulate'                                # Python interface
+  'foreach', 'parallel', 'doParallel'         # For parallelization
 ))
 registerDoParallel(detectCores() / 2)
-h2o.init(); options("h2o.use.data.table" = T)
-source('./geospatial.R')
-source_python('./dataCleaning.py')
 
 
-#################
-# Data Cleaning #
-#################
+#######################
+# Data Pre-processing #
+#######################
 
 
+# Load Data
 path <- unzip('./data/sf-crime.zip', 'train.csv')
 crime_data <- fread(path); invisible(file.remove(path))
-crime_data <- encodeGeospatial(crime_data)
-crime_data <- data.table(mainClean(crime_data))
-str(crime_data)
+# path <- unzip('./data/sf-crime.zip', 'test.csv')
+# crime_data_test <- fread(path); invisible(file.remove(path))
 
-# Split data.table into data matrix and response vector
-train_data <- mltools::sparsify(crime_data[, -1])
-train_label_num <- as.numeric(factor(crime_data$Category)) - 1
-train_label <- factor(make.names(train_label_num))
+# Clean Data
+crime_data <- pre_process(crime_data)
+# crime_data_test <- pre_process(crime_data_test)
 
 
-####################
-# Parameter Tuning #
-####################
+################
+# Model Tuning #
+################
 
 
 set.seed(2019)
 
+# Split data.table into a feature sparse matrix and a response vector
+train_data <- mltools::sparsify(crime_data[, -1])
+train_label_num <- as.numeric(factor(crime_data$Category)) - 1
+train_label <- factor(make.names(train_label_num))
 
-##########################
-# XGBoost (Tree Booster) #
-##########################
-
+# XGBoost (Tree)
 
 # Direct (No Tuning, only nrounds)
 dtrain <- xgb.DMatrix(data = train_data, label = train_label_num)
@@ -73,12 +64,9 @@ xgbModel <- train(x = train_data, y = train_label,
 
 pred <- predict(xgbModel, train_data)
 
+# H2O (GBM)
 
-#############
-# H2O (GBM) #
-#############
-
-
+h2o.init(); options("h2o.use.data.table" = T)
 h2o_train <- as.h2o(crime_data[, -1])
 gbmControl <- trainControl(method = 'none')
 gbmControl <- trainControl(method = 'repeatedcv', number = 10, repeats = 10,
@@ -96,5 +84,3 @@ gbmModel <- train(x = h2o_train, y = train_label,
                   trControl = gbmControl, tuneGrid = gbmGrid)
 
 pred <- predict(gbmModel, train_data)
-mean(train_data$Category == pred)
-
