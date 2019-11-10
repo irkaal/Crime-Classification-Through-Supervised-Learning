@@ -1,15 +1,16 @@
 
-############################
-# Load Libraries and Setup #
-############################
+
+#########
+# Setup #
+#########
 
 
 source('./misc.R')
 loadPackages(c(
-  'data.table', 'slam', 'Matrix', 'mltools', # For performance boost
-  'caret', 'xgboost', 'h2o',                 # For parameter tuning, H2O (http://h2o-release.s3.amazonaws.com/h2o/rel-yau/10/index.html)
-  'foreach', 'parallel', 'doParallel',       # For parallelization
-  'reticulate'                               # Python interface
+  'data.table', 'slam', 'Matrix', 'mltools',  # For performance boost
+  'caret', 'xgboost', 'h2o',                  # For parameter tuning, H2O (http://h2o-release.s3.amazonaws.com/h2o/rel-yau/10/index.html)
+  'foreach', 'parallel', 'doParallel',        # For parallelization
+  'reticulate'                                # Python interface
 ))
 registerDoParallel(detectCores() / 2)
 h2o.init(); options("h2o.use.data.table" = T)
@@ -69,12 +70,12 @@ xgbGrid <- expand.grid(max_depth = c(6),
 xgbModel <- train(x = train_data, y = train_label,
                   method = 'xgbTree', metric = "logLoss", 
                   trControl = xgbControl, tuneGrid = xgbGrid)
-print(xgbModel)
+
 pred <- predict(xgbModel, train_data)
 
 
 #############
-# H20 (GBM) #
+# H2O (GBM) #
 #############
 
 
@@ -93,7 +94,7 @@ gbmGrid <- expand.grid(ntrees = 50,
 gbmModel <- train(x = h2o_train, y = train_label,
                   method = 'gbm_h2o', metric = "logLoss", 
                   trControl = gbmControl, tuneGrid = gbmGrid)
-print(gbmModel)
+
 pred <- predict(gbmModel, train_data)
 mean(train_data$Category == pred)
 
