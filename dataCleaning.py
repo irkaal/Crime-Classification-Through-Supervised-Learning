@@ -8,48 +8,63 @@ def mainClean(dataset):
     tic = start()
     if set(['PdDistrict', 'Address', 'Dates', 'DayOfWeek', 'Descript', 'Resolution']).issubset(dataset.columns):
         # One-hot encoding of column PdDistrict
+        updateProgress(1, 'Encoding PdDistrict')
         dataset = dataset.join(pd.get_dummies(dataset['PdDistrict'], prefix = 'PdDistrict'))
-        updateProgress(1, 'Encoded PdDistrict')
+        # Encode Patrol Division
+        updateProgress(2, 'Encoding PatrolDivision')
+        dataset = encodePatrolDiv(dataset)
         # Encode Address by type (Is it an intersection?)
+        updateProgress(3, 'Encoding Address')
         dataset['Intersection'] = dataset['Address'].map(lambda a: int('/' in a))
-        updateProgress(2, 'Encoded Address')
         # Retrieve datetime indices
+        updateProgress(4, 'Retrieving Date indices')
         dateIndices = pd.DatetimeIndex(dataset['Dates'])
         dateIndicesHour = dateIndices.hour
         dateIndicesDay = dateIndices.day
         dateIndicesMonth = dateIndices.month
-        updateProgress(3, 'Retrieved Date Indices')
         # Encode time into 6-Hour Period
+        updateProgress(5, 'Encoding 6-Hour Period')
         dataset = encodePeriod(dataset, dateIndicesHour)
-        updateProgress(4, 'Encoded 6-Hour Period')
         # Encode month into 4 Seasons
+        updateProgress(6, 'Encoding Season')
         dataset = encodeSeason(dataset, dateIndicesMonth)
-        updateProgress(5, 'Encoded Season')
         # One-hot encoding of column DayOfWeek
+        updateProgress(7, 'Encoding DayOfWeek')
         dataset = encodeCyclic(dataset, 'DayOfWeek', dateIndices.dayofweek, 7) 
-        updateProgress(6, 'Encoded DayOfWeek')
         # Cyclic encoding for Day of Year
+        updateProgress(8, 'Encoding DayOfYear')
         dataset = encodeCyclic(dataset, 'DayOfYear', dateIndices.dayofyear, 365)
-        updateProgress(7, 'Encoded PdDistrict')
         # Cyclic encoding for Day of Month
+        updateProgress(9, 'Encoding DayOfMonth')
         dataset = encodeCyclic(dataset, 'DayOfMonth', dateIndicesDay, 31)
-        updateProgress(8, 'Encoded PdDistrict')
         # Cyclic encoding for Month
+        updateProgress(10, 'Encoding Month')
         dataset = encodeCyclic(dataset, 'Month', dateIndicesMonth, 12)
-        updateProgress(9, 'Encoded PdDistrict')
         # One-hot encoding for Year
+        updateProgress(11, 'Encoding Year')
         dataset = dataset.join(pd.get_dummies(dateIndices.year, prefix = 'Year'))
-        updateProgress(10, 'Encoded PdDistrict')
         # Cyclic encoding for Hour + Minute / 60
+        updateProgress(12, 'Encoding Hour')
         dataset = encodeCyclic(dataset, 'Hour', dateIndicesHour + dateIndices.minute / 60, 24)
-        updateProgress(11, 'Encoded PdDistrict')
         # Encode holidays
+        updateProgress(13, 'Encoding Holidays')
         dataset = encodeHolidays(dataset, dateIndicesDay, dateIndicesMonth)
-        updateProgress(12, 'Encoded Holidays')
+        # Encode geospatial
+        updateProgress(14, 'Encoding geospatial') 
+        dataset = encodeGeospatial(dataset)
         # Drop unused columns
+        updateProgress(15, 'Dropping unused columns') 
         dataset = dataset.drop(columns = ['PdDistrict', 'Address', 'Dates', 'DayOfWeek', 'Descript', 'Resolution'])
-        updateProgress(12, 'Dropped unused columns') 
     end(tic)
+    return dataset
+
+# Encode PdDistrict to 2 Patrol Divisions
+def encodePatrolDiv(dataset):
+    division = {'CENTRAL': 0, 'INGLESIDE': 0, 'NORTHERN': 0, 'SOUTHERN': 0, 'TENDERLOIN': 0,
+                'BAYVIEW': 1, 'MISSION': 1, 'PARK': 1, 'RICHMOND': 1, 'TARAVAL': 1}
+    districtToDiv = dataset['PdDistrict'].map(division)
+    dataset['MetroDiv'] = districtToDiv ^ 1
+    dataset['GoldenGateDiv'] = districtToDiv
     return dataset
 
 # One-hot encoding of column Date by 6 hour periods
@@ -77,7 +92,7 @@ def encodeCyclic(dataset, colName, val, maxVal):
     return dataset
 
 def encodeHolidays(dataset, day, month):
-    # New Years Day - January 1, 2019
+    # New Years Day - January 1
     dataset['NewYearsDay'] = np.logical_and(day == 1, month == 1).astype(int)
     # Dr. Martin Luther King, Jr. Day -  January 21, 2019
     dataset['MartinLutherDay'] = np.logical_and(day == 21, month == 1).astype(int)
@@ -85,34 +100,64 @@ def encodeHolidays(dataset, day, month):
     dataset['PresidentsDay'] = np.logical_and(day == 18, month == 2).astype(int)
     # Memorial Day -  May 27, 2019
     dataset['MemorialDay'] = np.logical_and(day == 27, month == 5).astype(int)
-    # Independence Day -  July 4, 2019
+    # Independence Day -  July 4
     dataset['IndependenceDay'] = np.logical_and(day == 4, month == 7).astype(int)
     # Labor Day -  September 2, 2019
     dataset['LaborDay'] = np.logical_and(day == 2, month == 9).astype(int)
     # Indigenous Peoples Day - October 14, 2019
     dataset['IndigenousDay'] = np.logical_and(day == 14, month == 10).astype(int)
-    # Veterans Day - November 11, 2019
+    # Veterans Day - November 11
     dataset['VeteransDay'] = np.logical_and(day == 11, month == 11).astype(int)
     # Thanksgiving Day - November 28, 2019
     dataset['ThanksgivingDay'] = np.logical_and(day == 28, month == 11).astype(int)
-    # Christmas Day - December 25, 2019
+    # Christmas Day - December 25
     dataset['ChristmasDay'] = np.logical_and(day == 25, month == 12).astype(int)
     return dataset
 
-# Progress helpers
+# Encode Geospatial
+def encodeGeospatial(dataset):
+    # Add distances between center of the city + all police stations and crime locations.
+    x, y = dataset['X'], dataset['Y'] 
+    # Center of city (https://www.citylab.com/design/2016/06/exact-center-of-san-francisco/486341/)
+    dataset['CenterDist'] = haversine(x, y, -122.442500, 37.754540)
+    # Coordinates obtained from google maps
+    dataset['CentralDist'] = haversine(x, y, -122.409960, 37.798736) 
+    dataset['IngleDist'] = haversine(x, y, -122.446261, 37.724694) 
+    dataset['NorthDist'] = haversine(x, y, -122.432516, 37.780226)
+    dataset['SouthDist'] = haversine(x, y, -122.389411, 37.772382)
+    dataset['TenderDist'] = haversine(x, y, -122.412924, 37.783783)
+    dataset['BayDist'] = haversine(x, y, -122.397771, 37.729825)
+    dataset['MissionDist'] = haversine(x, y, -122.421951, 37.763013)
+    dataset['ParkDist'] = haversine(x, y, -122.455391, 37.767835)
+    dataset['RichDist'] = haversine(x, y, -122.464462, 37.780016)
+    dataset['TaravalDist'] = haversine(x, y, -122.481516, 37.743755)
+    return dataset
+
+
+# Helper functions
+
+# Haversine distance - Great-circle distance in kilometres
+def haversine(x1, y1, x2, y2):
+    lon1, lat1, lon2, lat2 = map(np.radians, (x1, y1, x2, y2))
+    h = np.sin((lat2 - lat1) / 2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin((lon2 - lon1) / 2)**2
+    r = 6378.137 # Earth's radius
+    d = 2 * r * np.arcsin(np.sqrt(h))
+    return d
+
+# Progress tracker
 def updateProgress(i, task):
-    sys.stdout.write('\r[%-52s] %d%% (%s)%s' % ('====' * i, 100 / 13 * i, task, ' ' * (36 - len(task))))
+    sys.stdout.write('\r[%-48s] %d%% (%s)%s' % ('===' * i, 100 / 16 * i, task, ' ' * (36 - len(task))))
     sys.stdout.flush()
 
 def start():
-    print('Cleaning...', flush = True)
+    print('(Python) Cleaning...', flush = True)
     updateProgress(0, '')
     return time.time()
 
 def end(tic):
     toc = time.time()
-    updateProgress(13, 'Done')
-    print(f'\nElapsed time: {time.time() - tic} seconds', flush = True)
+    updateProgress(16, 'Done')
+    print(f'\nElapsed time: {round(time.time() - tic, 3)} seconds', flush = True)
     return toc - tic
 
 # if __name__== "__main__":

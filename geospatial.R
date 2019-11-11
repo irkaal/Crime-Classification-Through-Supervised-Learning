@@ -1,27 +1,12 @@
-
-
+#
+# These functions have been converted to python in dataCleaning.py
+#
 encodeGeospatial <- function(dataset) {
   source('misc.R')
   loadPackages('dplyr')
-
-  dataset <- encodePatrolDiv(dataset)
   dataset <- encodeHaverDist(dataset)
   return(dataset)  
 }
-
-
-encodePatrolDiv <- function(dataset) {
-  if ('PdDistrict' %in% colnames(dataset)) {
-    # PatrolDivision (https://en.wikipedia.org/wiki/San_Francisco_Police_Department)
-    # Patrol divisions are broken down into two divisions Golden Gate Division and Metro Division which are each led by San Francisco Police Commanders.
-    dataset <- dataset %>% 
-      mutate(
-        MetroDiv = as.integer(PdDistrict %in% c('CENTRAL', 'INGLESIDE', 'NORTHERN', 'SOUTHERN', 'TENDERLOIN')),
-        GoldenGateDiv = as.integer(PdDistrict %in% c('BAYVIEW', 'MISSION', 'PARK', 'RICHMOND', 'TARAVAL'))) 
-  }
-  return(dataset)
-}
-
 
 encodeHaverDist <- function(dataset) {
   if (Reduce('&', c('X', 'Y') %in% colnames(dataset))) {
@@ -45,13 +30,9 @@ encodeHaverDist <- function(dataset) {
   return(dataset)
 }
 
+# Helper functions
 
-####################
-# Helper functions #
-####################
-
-
-# Conversions
+# Radians - Degrees conversion
 radians <- function(deg) {
   rad <- deg * pi / 180
   return(rad)
@@ -60,7 +41,6 @@ degrees <- function(rad) {
   deg <- rad * 180 / pi
   return(deg)
 }
-
 
 # Haversine distance - Great-circle distance (kilometres)
 haversine <- function(X1, Y1, X2, Y2) {
@@ -75,6 +55,7 @@ haversine <- function(X1, Y1, X2, Y2) {
   return(d)
 }
 
+# Additional functions (unused for now)
 
 # Manhattan distance L1-norm
 manhattan <- function(X1, Y1, X2, Y2) {
@@ -83,7 +64,6 @@ manhattan <- function(X1, Y1, X2, Y2) {
   man_dist <- lat_dist + lon_dist
   return(man_dist)
 }
-
 
 # Bearing degree
 bearing <- function(X1, Y1, X2, Y2) {
@@ -97,7 +77,6 @@ bearing <- function(X1, Y1, X2, Y2) {
   return(theta)
 }
 
-
 # Polar coordinates
 polarCoord <- function(X, Y) {
   return(list(
@@ -105,4 +84,3 @@ polarCoord <- function(X, Y) {
     Phi = atan(Y / X)
   ))
 }
-
