@@ -1,3 +1,4 @@
+
 # Setup
 source('misc.R')
 source('pre_process.R')
@@ -21,8 +22,9 @@ crime_data <- fread(path); invisible(file.remove(path))
 # crime_data_test <- fread(path); invisible(file.remove(path))
 
 # Clean Data
-crime_data <- pre_process(crime_data)
-# crime_data_test <- pre_process(crime_data_test)
+crime_data <- preProcess(crime_data)
+# crime_data_test <- preProcess(crime_data_test)
+# fwrite(crime_data, './data/clean.csv', row.names = F)
 
 
 ################
