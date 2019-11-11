@@ -129,6 +129,7 @@ updateProgress <- function(i, task) {
 
 start <- function() {
   cat('R> Handling Outliers...\n')
+  updateProgress(0, '')
   return(Sys.time())
 }
 
