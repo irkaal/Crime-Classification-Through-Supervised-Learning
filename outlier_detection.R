@@ -1,16 +1,12 @@
 
-
 # TODO: visualize outliers
 detectOutliers <- function(dataset) {
   source('misc.R')
   loadPackages('ggplot2')
   
   plot <- ggplot(data = dataset, aes(group = PdDistrict, color = PdDistrict))
-  
   plot + geom_boxplot(aes(y = X)) + ggtitle('Distribution of Longitudes by District')
-  
   plot + geom_boxplot(aes(y = Y)) + ggtitle('Distribution of Latitudes by District')
-  
   model <- kmeans(dataset[, c('X', 'Y')], 5)
   dataset$Cluster <- factor(model$cluster)
   ggplot(data = dataset, aes(x = X, y = Y)) + geom_point(data = dataset, aes(color = Cluster))
@@ -19,7 +15,7 @@ detectOutliers <- function(dataset) {
 
 handleOutliers <- function(dataset) {
   source('misc.R')
-  loadPackages(c('stringr', 'tmaptools'))
+  loadPackages('stringr')
   
   # Define outlier boundaries. These are just estimates from google map.
   min_X <- -122.515465
@@ -64,6 +60,7 @@ handleOutliers <- function(dataset) {
   
   # DO NOT RUN THIS REPEATEDLY! USE CACHED RESULTS INSTEAD.
   # Policy (https://operations.osmfoundation.org/policies/nominatim/)
+  # library(tmaptools)
   # query <- str_replace(outlier$Address, '/', 'and')
   # geocode <- geocode_OSM(query)
   # write.csv(geocode, './data/geocode_result.csv', row.names = F)

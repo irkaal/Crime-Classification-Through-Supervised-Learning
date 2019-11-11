@@ -62,13 +62,14 @@ degrees <- function(rad) {
 }
 
 
-# Haversine distance - Great-circle distance (Kilometres)
+# Haversine distance - Great-circle distance (kilometres)
 haversine <- function(X1, Y1, X2, Y2) {
   X1 <- radians(X1)
   Y1 <- radians(Y1)
   X2 <- radians(X2)
   Y2 <- radians(Y2)
-  r <- 6378.137 # Earth's radius in metres
+  # Earth's radius
+  r <- 6378.137
   h <- sin((Y2 - Y1) / 2)^2 + cos(Y1) * cos(Y2) * sin((X2 - X1) / 2)^2
   d <- 2 * r * asin(sqrt(h))
   return(d)
