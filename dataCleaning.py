@@ -1,8 +1,9 @@
+import os
+from zipfile import ZipFile
+import sys
+import time
 import pandas as pd
 import numpy as np
-import time
-import sys
-import os
 
 def mainClean(dataset):
     tic = start()
@@ -146,25 +147,26 @@ def haversine(x1, y1, x2, y2):
 
 # Progress tracker
 def updateProgress(i, task):
-    sys.stdout.write('\r[%-48s] %d%% (%s)%s' % ('===' * i, 100 / 16 * i, task, ' ' * (36 - len(task))))
+    sys.stdout.write('\r[%-48s] %d%% (%s)%s' % ('===' * i, 100 / 16 * i, task, ' ' * (23 - len(task))))
     sys.stdout.flush()
 
 def start():
-    print('(Python) Cleaning...', flush = True)
+    print('Python> Cleaning...', flush = True)
     updateProgress(0, '')
     return time.time()
 
 def end(tic):
     toc = time.time()
     updateProgress(16, 'Done')
-    print(f'\nElapsed time: {round(time.time() - tic, 3)} seconds', flush = True)
+    print(f'\nElapsed time: {round(time.time() - tic, 3)} second(s)', flush = True)
     return toc - tic
 
 # if __name__== "__main__":
 #     try:
 #         os.chdir(os.path.dirname(os.path.abspath(__file__)))
-#         trainDataset = pd.read_csv('./data/train.csv')
-#         trainDataset = mainClean(trainDataset)
+#         zip = ZipFile('data/sf-crime.zip')
+#         train_data = pd.read_csv(zip.open('train.csv'))
+#         train_data = mainClean(train_data)
 #     except Exception as e:
 #         print(e)
 #         print("Can't find csv!")

@@ -72,8 +72,8 @@ handleOutliers <- function(dataset, write) {
   # library(tmaptools)
   # query <- str_replace(outlier$Address, '/', 'and')
   # geocode <- geocode_OSM(query)
-  # write.csv(geocode, './data/geocode_result.csv', row.names = F)
-  path <- unzip('./data/sf-crime.zip', 'geocode_result.csv')
+  # write.csv(geocode, 'data/geocode_result.csv', row.names = F)
+  path <- unzip('data/sf-crime.zip', 'geocode_result.csv')
   geocode <- fread(path); invisible(file.remove(path))
   valid_filter <- (min_X < geocode$lon & geocode$lon < max_X) | (min_Y < geocode$lat & geocode$lat < max_Y)
   geocode <- geocode[valid_filter, ]
@@ -110,7 +110,7 @@ handleOutliers <- function(dataset, write) {
   dataset[outlier_filter, ]$Y <- avg_Y[replace_index, ]$Y  
   
   if (write) {
-    fwrite(dataset, './data/train_rclean.csv', row.names = F) 
+    fwrite(dataset, 'data/train_rclean.csv', row.names = F) 
     end(tic)
     return(NULL)
   } else {
@@ -128,11 +128,11 @@ updateProgress <- function(i, task) {
 }
 
 start <- function() {
-  cat('(R) Handling Outliers...\n')
+  cat('R> Handling Outliers...\n')
   return(Sys.time())
 }
 
 end <- function(tic) {
   updateProgress(10, 'Done')
-  cat('\nElapsed time:', round(as.numeric(Sys.time() - tic), 3), 'seconds\n')
+  cat('\nElapsed time:', round(as.numeric(Sys.time() - tic), 3), 'second(s)\n')
 }

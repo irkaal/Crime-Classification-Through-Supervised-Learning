@@ -1,5 +1,6 @@
 
 # Setup
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 source('misc.R')
 source('pre_process.R')
 loadPackages(c(
@@ -10,27 +11,23 @@ loadPackages(c(
 registerDoParallel(detectCores() / 2)
 
 
-#######################
-# Data Pre-processing #
-#######################
-
+#
+# Data Pre-processing
+#
 
 # Load Data
-path <- unzip('./data/sf-crime.zip', 'train.csv')
+path <- unzip('data/sf-crime.zip', 'train.csv')
 crime_data <- fread(path); invisible(file.remove(path))
-# path <- unzip('./data/sf-crime.zip', 'test.csv')
+# path <- unzip('data/sf-crime.zip', 'test.csv')
 # crime_data_test <- fread(path); invisible(file.remove(path))
 
 # Clean Data
-temp <- preProcess(crime_data)
+crime_data <- preProcess(crime_data)
 # crime_data_test <- preProcess(crime_data_test)
-# fwrite(crime_data, './data/clean.csv', row.names = F)
 
-
-################
-# Model Tuning #
-################
-
+#
+# Model Tuning
+#
 
 set.seed(2019)
 
