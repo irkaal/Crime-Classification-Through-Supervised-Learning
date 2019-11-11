@@ -22,7 +22,7 @@ crime_data <- fread(path); invisible(file.remove(path))
 # crime_data_test <- fread(path); invisible(file.remove(path))
 
 # Clean Data
-crime_data <- preProcess(crime_data)
+temp <- preProcess(crime_data)
 # crime_data_test <- preProcess(crime_data_test)
 # fwrite(crime_data, './data/clean.csv', row.names = F)
 
