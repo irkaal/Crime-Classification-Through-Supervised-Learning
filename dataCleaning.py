@@ -4,6 +4,7 @@ import sys
 import time
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 
 def mainClean(dataset):
     tic = start()
@@ -56,6 +57,9 @@ def mainClean(dataset):
         # Drop unused columns
         updateProgress(15, 'Dropping unused columns') 
         dataset = dataset.drop(columns = ['PdDistrict', 'Address', 'Dates', 'DayOfWeek', 'Descript', 'Resolution'])
+        # Center and scale numerical features
+        updateProgress(16, 'Centering and scaling features') 
+        dataset = centerScale(dataset)
     end(tic)
     return dataset
 
@@ -134,6 +138,15 @@ def encodeGeospatial(dataset):
     dataset['TaravalDist'] = haversine(x, y, -122.481516, 37.743755)
     return dataset
 
+# After encoding, we need to scale all numeric feature values
+def centerScale(dataset):
+    y = dataset['Category']
+    x = dataset.drop(columns = ['Category'])
+    stdScale = StandardScaler().fit(x)
+    xScaled = stdScale.transform(x)
+    dataset = pd.DataFrame(xScaled, columns = x.columns)
+    dataset['Category'] = y
+    return(dataset)
 
 # Helper functions
 
@@ -147,7 +160,10 @@ def haversine(x1, y1, x2, y2):
 
 # Progress tracker
 def updateProgress(i, task):
-    sys.stdout.write('\r[%-48s] %d%% (%s)%s' % ('===' * i, 100 / 16 * i, task, ' ' * (23 - len(task))))
+    progress = '=' * round(48 / 17 * i)
+    space = ' ' * (30 - len(task))
+    percent = round(100 / 17 * i, 3)
+    sys.stdout.write('\r[%-48s] %d%% (%s)%s' % (progress, percent, task, space))
     sys.stdout.flush()
 
 def start():
@@ -156,10 +172,8 @@ def start():
     return time.time()
 
 def end(tic):
-    toc = time.time()
-    updateProgress(16, 'Done')
+    updateProgress(17, 'Done')
     print(f'\nElapsed time: {round(time.time() - tic, 3)} second(s)', flush = True)
-    return toc - tic
 
 # if __name__== "__main__":
 #     try:

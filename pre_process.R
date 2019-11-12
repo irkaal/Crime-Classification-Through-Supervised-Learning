@@ -8,8 +8,7 @@ preProcess <- function(dataset) {
   dataset <- handleOutliers(dataset, write = F)
   # Main cleaning task
   source_python('dataCleaning.py')
-  dataset <- mainClean(dataset)
-  dataset <- as.data.table(dataset)
+  dataset <- as.data.table(mainClean(dataset))
   return(dataset)
 }
 
