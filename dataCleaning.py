@@ -4,91 +4,103 @@ import sys
 import time
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
 
 def mainClean(dataset):
     tic = start()
     if set(['PdDistrict', 'Address', 'Dates', 'DayOfWeek', 'Descript', 'Resolution']).issubset(dataset.columns):
-        # One-hot encoding of column PdDistrict
+        # Encode PdDistrict (One-Hot encoding)
         updateProgress(1, 'Encoding PdDistrict')
         dataset = dataset.join(pd.get_dummies(dataset['PdDistrict'], prefix = 'PdDistrict'))
-        # Encode Patrol Division
+        
+        # Encode Patrol Division (Label encoding - 0 for Metro and 1 for GoldenGate)        
         updateProgress(2, 'Encoding PatrolDivision')
         dataset = encodePatrolDiv(dataset)
-        # Encode Address by type (Is it an intersection?)
+        
+        # Encode Address by type (Label encoding - 0 for not an intersection and 1 for an intersection)
         updateProgress(3, 'Encoding Address')
         dataset['Intersection'] = dataset['Address'].map(lambda a: int('/' in a))
-        # Retrieve datetime indices
-        updateProgress(4, 'Retrieving Date indices')
+        
+        # Retrieve DatetimeIndex
+        updateProgress(4, 'Retrieving DatetimeIndex')
         dateIndices = pd.DatetimeIndex(dataset['Dates'])
         dateIndicesHour = dateIndices.hour
         dateIndicesDay = dateIndices.day
         dateIndicesMonth = dateIndices.month
-        # Encode time into 6-Hour Period
-        updateProgress(5, 'Encoding 6-Hour Period')
-        dataset = encodePeriod(dataset, dateIndicesHour)
-        # Encode month into 4 Seasons
-        updateProgress(6, 'Encoding Season')
-        dataset = encodeSeason(dataset, dateIndicesMonth)
-        # One-hot encoding of column DayOfWeek
-        updateProgress(7, 'Encoding DayOfWeek')
+        
+        # Encode DayOfWeek
+        updateProgress(5, 'Encoding DayOfWeek')
         dataset = encodeCyclic(dataset, 'DayOfWeek', dateIndices.dayofweek, 7) 
-        # Cyclic encoding for Day of Year
-        updateProgress(8, 'Encoding DayOfYear')
+        
+        # Encode DayofYear
+        updateProgress(6, 'Encoding DayOfYear')
         dataset = encodeCyclic(dataset, 'DayOfYear', dateIndices.dayofyear, 365)
-        # Cyclic encoding for Day of Month
-        updateProgress(9, 'Encoding DayOfMonth')
+        
+        # Encode DayofMonth
+        updateProgress(7, 'Encoding DayOfMonth')
         dataset = encodeCyclic(dataset, 'DayOfMonth', dateIndicesDay, 31)
-        # Cyclic encoding for Month
-        updateProgress(10, 'Encoding Month')
-        dataset = encodeCyclic(dataset, 'Month', dateIndicesMonth, 12)
-        # One-hot encoding for Year
-        updateProgress(11, 'Encoding Year')
+        
+        # Encode Year
+        updateProgress(8, 'Encoding Year')
         dataset = dataset.join(pd.get_dummies(dateIndices.year, prefix = 'Year'))
-        # Cyclic encoding for Hour + Minute / 60
-        updateProgress(12, 'Encoding Hour')
+       
+        # Encode Hour + Minute / 60
+        updateProgress(9, 'Encoding Hour')
         dataset = encodeCyclic(dataset, 'Hour', dateIndicesHour + dateIndices.minute / 60, 24)
-        # Encode holidays
-        updateProgress(13, 'Encoding Holidays')
-        dataset = encodeHolidays(dataset, dateIndicesDay, dateIndicesMonth)
-        # Encode geospatial
-        updateProgress(14, 'Encoding geospatial') 
+        
+        # TODO: Encode Event (Label encoding - 0 for not an event day and 1 for an event day)
+        updateProgress(10, 'Encoding Event')
+        dataset = encodeEvent(dataset, dateIndicesDay, dateIndicesMonth)
+        
+        # TODO: Encode Geospatial
+        updateProgress(11, 'Encoding Geospatial') 
         dataset = encodeGeospatial(dataset)
+        
         # Drop unused columns
-        updateProgress(15, 'Dropping unused columns') 
+        updateProgress(12, 'Dropping unused columns') 
         dataset = dataset.drop(columns = ['PdDistrict', 'Address', 'Dates', 'DayOfWeek', 'Descript', 'Resolution'])
-        # Center and scale numerical features
-        updateProgress(16, 'Centering and scaling features') 
-        dataset = centerScale(dataset)
     end(tic)
     return dataset
 
-# Encode PdDistrict to 2 Patrol Divisions
 def encodePatrolDiv(dataset):
-    division = {'CENTRAL': 0, 'INGLESIDE': 0, 'NORTHERN': 0, 'SOUTHERN': 0, 'TENDERLOIN': 0,
-                'BAYVIEW': 1, 'MISSION': 1, 'PARK': 1, 'RICHMOND': 1, 'TARAVAL': 1}
-    districtToDiv = dataset['PdDistrict'].map(division)
-    dataset['MetroDiv'] = districtToDiv ^ 1
-    dataset['GoldenGateDiv'] = districtToDiv
+    division = {'BAYVIEW': 0, 'MISSION': 0, 'PARK': 0, 'RICHMOND': 0, 'TARAVAL': 0, 
+                'CENTRAL': 1, 'INGLESIDE': 1, 'NORTHERN': 1, 'SOUTHERN': 1, 'TENDERLOIN': 1} 
+    dataset['Patrol_Div'] = dataset['PdDistrict'].map(division) 
     return dataset
 
-# One-hot encoding of column Date by 6 hour periods
-def encodePeriod(dataset, hour):
-    period = np.floor(hour / 6) % 6
-    dataset['00:00-05:59'] = (period == 0).astype(int)
-    dataset['06:00-11:59'] = (period == 1).astype(int)
-    dataset['12:00-17:59'] = (period == 2).astype(int)
-    dataset['18:00-23:59'] = (period == 3).astype(int)
+def encodeEvent(dataset, day, month):
+    # TODO:
+    dataset['Event'] = (day == 1).astype(int)
+    # dataset['NewYearsDay'] = np.logical_and(day == 1, month == 1).astype(int)
+    # dataset['MartinLutherDay'] = np.logical_and(day == 21, month == 1).astype(int)
+    # dataset['PresidentsDay'] = np.logical_and(day == 18, month == 2).astype(int)
+    # dataset['MemorialDay'] = np.logical_and(day == 27, month == 5).astype(int)
+    # dataset['IndependenceDay'] = np.logical_and(day == 4, month == 7).astype(int)
+    # dataset['LaborDay'] = np.logical_and(day == 2, month == 9).astype(int)
+    # dataset['IndigenousDay'] = np.logical_and(day == 14, month == 10).astype(int)
+    # dataset['VeteransDay'] = np.logical_and(day == 11, month == 11).astype(int)
+    # dataset['ThanksgivingDay'] = np.logical_and(day == 28, month == 11).astype(int)
+    # dataset['ChristmasDay'] = np.logical_and(day == 25, month == 12).astype(int)
     return dataset
 
-# One-hot encoding of column Date by four seasons
-def encodeSeason(dataset, month):
-    season = np.floor(month / 12 * 4) % 4
-    dataset['Winter'] = (season == 0).astype(int) # Winter (December, January, February)
-    dataset['Spring'] = (season == 1).astype(int) # Spring (March, April, May)
-    dataset['Summer'] = (season == 2).astype(int) # Summer (June, July, August)
-    dataset['Autumn'] = (season == 3).astype(int) # Autumn (September, October, November)
+# Encode Geospatial
+def encodeGeospatial(dataset):
+    x, y = dataset['X'], dataset['Y']
+    # Add distance to the closest police station.
+    dataset['Station_Dist'] = np.array([
+        haversine(x, y, -122.409960, 37.798736),  # Central Station 
+        haversine(x, y, -122.446261, 37.724694),  # Ingleside Station
+        haversine(x, y, -122.432516, 37.780226),  # Northern Station
+        haversine(x, y, -122.389411, 37.772382),  # Southern Station
+        haversine(x, y, -122.412924, 37.783783),  # Tenderloin Station
+        haversine(x, y, -122.397771, 37.729825),  # Bayview Station
+        haversine(x, y, -122.421951, 37.763013),  # Mission Station
+        haversine(x, y, -122.455391, 37.767835),  # Park Station
+        haversine(x, y, -122.464462, 37.780016),  # Richmond Station 
+        haversine(x, y, -122.481516, 37.743755)   # Taraval Station
+        ]).min(axis = 0)
     return dataset
+
+# Helper functions
 
 # Cyclic encoding helper
 def encodeCyclic(dataset, colName, val, maxVal):
@@ -96,73 +108,17 @@ def encodeCyclic(dataset, colName, val, maxVal):
     dataset[colName + '_Y'] = np.sin(2 * np.pi * val / maxVal)
     return dataset
 
-def encodeHolidays(dataset, day, month):
-    # New Years Day - January 1
-    dataset['NewYearsDay'] = np.logical_and(day == 1, month == 1).astype(int)
-    # Dr. Martin Luther King, Jr. Day -  January 21, 2019
-    dataset['MartinLutherDay'] = np.logical_and(day == 21, month == 1).astype(int)
-    # President's Day - February 18, 2019
-    dataset['PresidentsDay'] = np.logical_and(day == 18, month == 2).astype(int)
-    # Memorial Day -  May 27, 2019
-    dataset['MemorialDay'] = np.logical_and(day == 27, month == 5).astype(int)
-    # Independence Day -  July 4
-    dataset['IndependenceDay'] = np.logical_and(day == 4, month == 7).astype(int)
-    # Labor Day -  September 2, 2019
-    dataset['LaborDay'] = np.logical_and(day == 2, month == 9).astype(int)
-    # Indigenous Peoples Day - October 14, 2019
-    dataset['IndigenousDay'] = np.logical_and(day == 14, month == 10).astype(int)
-    # Veterans Day - November 11
-    dataset['VeteransDay'] = np.logical_and(day == 11, month == 11).astype(int)
-    # Thanksgiving Day - November 28, 2019
-    dataset['ThanksgivingDay'] = np.logical_and(day == 28, month == 11).astype(int)
-    # Christmas Day - December 25
-    dataset['ChristmasDay'] = np.logical_and(day == 25, month == 12).astype(int)
-    return dataset
-
-# Encode Geospatial
-def encodeGeospatial(dataset):
-    # Add distances between center of the city + all police stations and crime locations.
-    x, y = dataset['X'], dataset['Y'] 
-    # Center of city (https://www.citylab.com/design/2016/06/exact-center-of-san-francisco/486341/)
-    dataset['CenterDist'] = haversine(x, y, -122.442500, 37.754540)
-    # Coordinates obtained from google maps
-    dataset['CentralDist'] = haversine(x, y, -122.409960, 37.798736) 
-    dataset['IngleDist'] = haversine(x, y, -122.446261, 37.724694) 
-    dataset['NorthDist'] = haversine(x, y, -122.432516, 37.780226)
-    dataset['SouthDist'] = haversine(x, y, -122.389411, 37.772382)
-    dataset['TenderDist'] = haversine(x, y, -122.412924, 37.783783)
-    dataset['BayDist'] = haversine(x, y, -122.397771, 37.729825)
-    dataset['MissionDist'] = haversine(x, y, -122.421951, 37.763013)
-    dataset['ParkDist'] = haversine(x, y, -122.455391, 37.767835)
-    dataset['RichDist'] = haversine(x, y, -122.464462, 37.780016)
-    dataset['TaravalDist'] = haversine(x, y, -122.481516, 37.743755)
-    return dataset
-
-# After encoding, we need to scale all numeric feature values
-def centerScale(dataset):
-    y = dataset['Category']
-    x = dataset.drop(columns = ['Category'])
-    stdScale = StandardScaler().fit(x)
-    xScaled = stdScale.transform(x)
-    dataset = pd.DataFrame(xScaled, columns = x.columns)
-    dataset['Category'] = y
-    return(dataset)
-
-# Helper functions
-
 # Haversine distance - Great-circle distance in kilometres
 def haversine(x1, y1, x2, y2):
-    lon1, lat1, lon2, lat2 = map(np.radians, (x1, y1, x2, y2))
+    lon1, lat1, lon2, lat2 = map(np.radians, [x1, y1, x2, y2])
     h = np.sin((lat2 - lat1) / 2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin((lon2 - lon1) / 2)**2
-    r = 6378.137 # Earth's radius
-    d = 2 * r * np.arcsin(np.sqrt(h))
-    return d
+    return 2 * 6378.137 * np.arcsin(np.sqrt(h))
 
 # Progress tracker
 def updateProgress(i, task):
-    progress = '=' * round(48 / 17 * i)
+    progress = '=' * round(48 / 13 * i)
     space = ' ' * (30 - len(task))
-    percent = round(100 / 17 * i, 3)
+    percent = round(100 / 13 * i, 3)
     sys.stdout.write('\r[%-48s] %d%% (%s)%s' % (progress, percent, task, space))
     sys.stdout.flush()
 
@@ -172,7 +128,7 @@ def start():
     return time.time()
 
 def end(tic):
-    updateProgress(17, 'Done')
+    updateProgress(13, 'Done')
     print(f'\nElapsed time: {round(time.time() - tic, 3)} second(s)', flush = True)
 
 # if __name__== "__main__":
@@ -180,7 +136,7 @@ def end(tic):
 #         os.chdir(os.path.dirname(os.path.abspath(__file__)))
 #         zip = ZipFile('data/sf-crime.zip')
 #         train_data = pd.read_csv(zip.open('train.csv'))
-#         train_data = mainClean(train_data)
+#         mainClean(train_data)
 #     except Exception as e:
 #         print(e)
 #         print("Can't find csv!")
