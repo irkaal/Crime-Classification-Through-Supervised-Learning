@@ -4,11 +4,9 @@ source('pre_process.R')
 loadPackages(c('data.table', 'caret', 'xgboost', 'plyr', 'xlsx', 'RLightGBM', 'Matrix', 'SparseM', 'LiblineaR'), quietly = T)
 
 
-
 # 1. Data Pre-processing and feature engineering
 
 # Load train data
-# train <- fread('data/clean.csv')
 path <- unzip('data/sf-crime.zip', 'train.csv')
 train <- fread(path); invisible(file.remove(path))
 
@@ -35,10 +33,6 @@ x_train <- train[, -1]
 # x_train <- ds[, -68]
 # y_train <- factor(ds$Class)
 
-rm(list = c('train', 'path'))
-
-
-
 
 
 # Parameter tuning and feature selection
@@ -64,21 +58,6 @@ system.time({
 write.xlsx(data.frame(xgbtree_3_2_3_2$bestTune), file = "data/param_tuning/xgbtree_3_2_3_2.xlsx", sheetName = "sheet1", row.names = F)
 if (nrow(xgbtree_3_2_3_2$results)) write.xlsx(data.frame(xgbtree_3_2_3_2$results), file = "data/param_tuning/xgbtree_3_2_3_2.xlsx", sheetName = "sheet2", append = T, row.names = F)
 
-#
-# xgbtree_5_2_5_2
-#
-
-#
-# xgbtree_5_3_5_2
-#
-
-#
-# xgbtree_5_3_5_3
-#
-
-#
-# xgbtree_5_5_5_5
-#
 
 #
 # lgbm_3_2_3_2
@@ -103,63 +82,53 @@ write.xlsx(data.frame(lgbm_3_2_3_2$bestTune), file = "data/param_tuning/lgbm_3_2
 if (nrow(lgbm_3_2_3_2$results)) write.xlsx(data.frame(lgbm_3_2_3_2$results), file = "data/param_tuning/lgbm_3_2_3_2.xlsx", sheetName = "sheet2", append = T, row.names = F)
 
 #
-# lgbm_5_2_5_2
+# lgbm_5_5_5_2
 #
 system.time({
-  set.seed(2019)
-  lgbm_5_2_5_2 <- train(x = data.frame(idx = 1:nrow(x_train)), # index 
+  set.seed(5552)
+  lgbm_5_5_5_2 <- train(x = data.frame(idx = 1:nrow(x_train)), # index 
                        y = y_train, 
                        matrix = Matrix(as.matrix(x_train), sparse = T),
                        method = caretModel.LGBM.sparse(), 
                        trControl = trainControl(
                          method = 'adaptive_cv', 
-                         number = 3, 
-                         repeats = 2, 
-                         adaptive = list(min = 3, alpha = 0.05, method = 'gls', complete = T),
+                         number = 5, 
+                         repeats = 5, 
+                         adaptive = list(min = 5, alpha = 0.05, method = 'gls', complete = T),
                          classProbs = T, summaryFunction = mnLogLoss,
                          verboseIter = T, returnData = F, returnResamp = 'none', allowParallel = F, search = 'random'),
                        metric = 'logLoss', 
                        verbosity = -1,
                        tuneLength = 2)
 })
-write.xlsx(data.frame(lgbm_5_2_5_2$bestTune), file = "data/param_tuning/lgbm_5_2_5_2.xlsx", sheetName = "sheet1", row.names = F)
-if (nrow(lgbm_5_2_5_2$results)) write.xlsx(data.frame(lgbm_5_2_5_2$results), file = "data/param_tuning/lgbm_5_2_5_2.xlsx", sheetName = "sheet2", append = T, row.names = F)
+write.xlsx(data.frame(lgbm_5_5_5_2$bestTune), file = "data/param_tuning/lgbm_5_5_5_2.xlsx", sheetName = "sheet1", row.names = F)
+if (nrow(lgbm_5_5_5_2$results)) write.xlsx(data.frame(lgbm_5_5_5_2$results), file = "data/param_tuning/lgbm_5_5_5_2.xlsx", sheetName = "sheet2", append = T, row.names = F)
 
 #
-# lgbm_3_2_3_2
+# lgbm_5_5_5_5
 #
-
-#
-# lgbm_3_2_3_2
-#
-
-#
-# lgbm_3_2_3_2
-#
-
-#
-# lgbm_3_2_3_2
-#
-
-#
-# lgbm_3_2_3_2
-#
-
-#
-# lgbm_3_2_3_2
-#
-
-#
-# lgbm_3_2_3_2
-#
-
-#
-# lgbm_3_2_3_2
-#
+system.time({
+  set.seed(5555)
+  lgbm_5_5_5_5 <- train(x = data.frame(idx = 1:nrow(x_train)), # index 
+                        y = y_train, 
+                        matrix = Matrix(as.matrix(x_train), sparse = T),
+                        method = caretModel.LGBM.sparse(), 
+                        trControl = trainControl(
+                          method = 'adaptive_cv', 
+                          number = 5, 
+                          repeats = 5, 
+                          adaptive = list(min = 5, alpha = 0.05, method = 'gls', complete = T),
+                          classProbs = T, summaryFunction = mnLogLoss,
+                          verboseIter = T, returnData = F, returnResamp = 'none', allowParallel = F, search = 'random'),
+                        metric = 'logLoss', 
+                        verbosity = -1,
+                        tuneLength = 5)
+})
+write.xlsx(data.frame(lgbm_5_5_5_5$bestTune), file = "data/param_tuning/lgbm_5_5_5_5.xlsx", sheetName = "sheet1", row.names = F)
+if (nrow(lgbm_5_5_5_5$results)) write.xlsx(data.frame(lgbm_5_5_5_5$results), file = "data/param_tuning/lgbm_5_5_5_5.xlsx", sheetName = "sheet2", append = T, row.names = F)
 
 
-
-# TODO: SVM with coordinate gradient descent
+# L2 SVM with coordinate gradient descent
 system.time({
   set.seed(2019)
   lsvm <- LiblineaR(data = x_train, target = y_train, verbose = F, 
@@ -167,22 +136,29 @@ system.time({
 })
 write.xlsx(data.frame(lsvm), file = "data/param_tuning/lsvm_5.xlsx", sheetName = "sheet1", row.names = F)
 
+# CV Test
+tryTypes = c(0:7)
+tryCosts = c(1000, 1, 0.001)
+bestCost = NA
+bestAcc = 0
+bestType = NA
+system.time({
+  for (ty in tryTypes) {
+    for (co in tryCosts) {
+      set.seed(2019)
+      acc = LiblineaR(data = x_train, target = y_train, type = ty, cost = co, bias = 1, cross = 5, verbose = FALSE)
+      cat('Results for C =', co, ' : ', acc, ' accuracy.\n', sep = '')
+      if (acc > bestAcc) {
+        bestCost = co
+        bestAcc = acc
+        bestType = ty
+      }
+    }
+  }
+})
+cat('Best model type is:', bestType, '\n')
+cat('Best cost is:', bestCost, '\n')
+cat('Best accuracy is:', bestAcc, '\n')
+write.xlsx(data.frame(BestType = bestType, BestCost = bestCost, BestAcc = bestAcc), file = "data/param_tuning/lsvm_all_1113.xlsx", sheetName = "sheet1", row.names = F)
 
 
-
-
-
-# 3. Prediction
-
-# Load test data
-# path <- unzip('data/sf-crime.zip', 'test.csv')
-# test <- fread(path); invisible(file.remove(path))
-# rm(path)
-
-# Clean data
-# test <- preProcess(test)
-
-# Predict
-
-# Clean up
-# rm(list = ls())

@@ -16,8 +16,8 @@ preProcess <- function(dataset, centerScale = F, rlang = T) {
 
 # Replaces the outlier coordinates with the correct ones or uses the mean coordinates of their respective PdDistrict
 handleOutliers <- function(dataset, write = F, runGeocode = F) {
-  tic <- start('Handling Outliers...', 10)
   source('misc.R'); loadPackages('stringr')
+  tic <- start('Handling Outliers...', 10)
   
   updateProgress(1, 10, 'Identifying outliers')
   # Define outlier boundaries. These are just estimates from google map.
