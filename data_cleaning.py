@@ -75,7 +75,7 @@ def main_clean(dataset, center_scale = False):
 def encode_patrol_div(dataset):
     division = {'BAYVIEW': 0, 'MISSION': 0, 'PARK': 0, 'RICHMOND': 0, 'TARAVAL': 0, 
                 'CENTRAL': 1, 'INGLESIDE': 1, 'NORTHERN': 1, 'SOUTHERN': 1, 'TENDERLOIN': 1} 
-    dataset['Patrol_Div'] = dataset['PdDistrict'].map(division) 
+    dataset['PatrolDivision'] = dataset['PdDistrict'].map(division) 
     return dataset
 
 def encode_event(dataset, date_indices_date):
@@ -88,7 +88,7 @@ def encode_event(dataset, date_indices_date):
 def encode_geospatial(dataset):
     x, y = dataset['X'], dataset['Y']
     # Add distance to the closest police station
-    dataset['Station_Dist'] = np.array([
+    dataset['NearestStation'] = np.array([
         haversine(x, y, -122.409960, 37.798736),  # Central Station 
         haversine(x, y, -122.446261, 37.724694),  # Ingleside Station
         haversine(x, y, -122.432516, 37.780226),  # Northern Station
