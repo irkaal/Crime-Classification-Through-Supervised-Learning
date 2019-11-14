@@ -55,7 +55,7 @@ def main_clean(dataset, center_scale = False):
         
         # TODO: Encode Event (Label encoding - 0 for not an event day and 1 for an event day)
         update_progress('Encoding Event')
-        dataset = encode_event(dataset, pd.to_datetime(date_indices))
+        dataset = encode_event(dataset, date_indices.date)
         
         # TODO: Encode Geospatial
         update_progress('Encoding Geospatial') 
@@ -78,15 +78,16 @@ def encode_patrol_div(dataset):
     dataset['Patrol_Div'] = dataset['PdDistrict'].map(division) 
     return dataset
 
-def encode_event(dataset, datetime):
-    # From Kaggle - 1/1/2003 to 5/13/2015
-    holidays = USFederalHolidayCalendar().holidays(start = '2003-01-01', end = '2015-05-13')
-    dataset['Event'] = datetime.isin(holidays).astype(int)
+def encode_event(dataset, date_indices_date):
+    holidays = pd.Series(USFederalHolidayCalendar().holidays(start = '2003-01-01', end = '2015-05-13'))
+    # This will not include original time info which makes comparison possible
+    datetime = pd.to_datetime(date_indices_date)
+    dataset['Event'] = pd.Series(datetime).isin(holidays).astype(int)
     return dataset
 
 def encode_geospatial(dataset):
     x, y = dataset['X'], dataset['Y']
-    # Add distance to the closest police station.
+    # Add distance to the closest police station
     dataset['Station_Dist'] = np.array([
         haversine(x, y, -122.409960, 37.798736),  # Central Station 
         haversine(x, y, -122.446261, 37.724694),  # Ingleside Station
@@ -151,9 +152,9 @@ def end():
 # if __name__== "__main__":
 #     try:
 #         os.chdir(os.path.dirname(os.path.abspath(__file__)))
-#         zip = ZipFile('data/sf-crime.zip')
-#         train = pd.read_csv(zip.open('train.csv'))
-#         main_clean(train, center_scale = True)
+#         zipFile = ZipFile('data/sf-crime.zip')
+#         dataset = pd.read_csv(zipFile.open('train.csv'))
+#         main_clean(dataset, center_scale = True)
 #     except Exception as e:
 #         print(e)
 #         print("Can't find csv!")
