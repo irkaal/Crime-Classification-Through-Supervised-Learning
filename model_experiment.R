@@ -1,171 +1,174 @@
 setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 source('misc.R')
 source('pre_process.R')
-loadPackages(c('data.table', 'slam', 'caret', 'xgboost', 'plyr', 'h2o', 'xlsx', 'parallel', 'doParallel'), quietly = T)
-registerDoParallel(2)
+loadPackages(c('data.table', 'caret', 'xgboost', 'plyr', 'xlsx', 'RLightGBM', 'Matrix', 'SparseM', 'LiblineaR'), quietly = T)
 
 
 
 # 1. Data Pre-processing and feature engineering
 
 # Load train data
-# TODO: REMOVE
-train <- fread('data/clean.csv')
-# path <- unzip('data/sf-crime.zip', 'train.csv')
-# train <- fread(path); invisible(file.remove(path))
+# train <- fread('data/clean.csv')
+path <- unzip('data/sf-crime.zip', 'train.csv')
+train <- fread(path); invisible(file.remove(path))
 
 # Clean data
-# train <- preProcess(train)
+train <- preProcess(train, centerScale = F) # Set centerScale to true for SVM
 
 # Prepare data for training
 y_train <- factor(make.names(as.numeric(factor(train$Category))))
-x_train <- train[, -68]
-rm(train)
+x_train <- train[, -1]
 
 # Correlation Plot
-# corr_mat <- cor(x_train)
+# corr_mat <- cor(as.matrix(x_train))
 # corrplot::corrplot(corr_mat)
 
-# Remove highly correlated features
-# highCorr <- findCorrelation(corr_mat, cutoff = 0.75)
-# predictors(highCorr)
-# x_train <- x_train[, -highCorr]
+# Check for highly correlated features
+# highCorr <- findCorrelation(corr_mat, cutoff = 0.5)
+# colnames(x_train)[highCorr]
 
 # Downsampling test
+# index <- y_train %nin% c('X15', 'X23', 'X30', 'X34')
+# y_train <- droplevels(y_train[index])
+# x_train <- x_train[index,]
 # ds <- downSample(x = x_train, y = y_train)
 # x_train <- ds[, -68]
 # y_train <- factor(ds$Class)
-# rm(ds)
+
+rm(list = c('train', 'path'))
+
+
 
 
 
 # Parameter tuning and feature selection
 
-# Random Control - Random Hyperparameter Search
-randCtrl <- trainControl(method = 'repeatedcv', 
-                         number = 10,
-                         repeats = 10,
-                         classProbs = T,
-                         summaryFunction = mnLogLoss,
-                         search = 'random') 
+#
+# xgbtree_3_2_3_2
+#
+system.time({
+  set.seed(2019)
+  xgbtree_3_2_3_2 <- train(x = x_train, 
+                   y = y_train,
+                   method = 'xgbTree', 
+                   metric = "logLoss", 
+                   trControl = trainControl(
+                     method = 'adaptive_cv', 
+                     number = 3, 
+                     repeats = 2, 
+                     adaptive = list(min = 3, alpha = 0.05, method = 'gls', complete = T),
+                     classProbs = T, summaryFunction = mnLogLoss,
+                     verboseIter = T, returnData = F, returnResamp = 'none', allowParallel = F, search = 'random'), 
+                   tuneLength = 2)
+})
+write.xlsx(data.frame(xgbtree_3_2_3_2$bestTune), file = "data/param_tuning/xgbtree_3_2_3_2.xlsx", sheetName = "sheet1", row.names = F)
+if (nrow(xgbtree_3_2_3_2$results)) write.xlsx(data.frame(xgbtree_3_2_3_2$results), file = "data/param_tuning/xgbtree_3_2_3_2.xlsx", sheetName = "sheet2", append = T, row.names = F)
 
-# Adaptive Resampling - Racing-type algorithm
-# Generalized Least Squares Model
-adaptGlsCtrl <- trainControl(method = 'adaptive_cv',
-                             number = 10, 
-                             repeats = 10,
-                             adaptive = list(min = 5, alpha = 0.05, 
-                                             method = 'gls', complete = T),
-                             classProbs = T,
-                             summaryFunction = mnLogLoss,
-                             search = 'random')
-# Bradley-Terry model
-adaptBTCtrl <- trainControl(method = 'adaptive_cv',
-                            number = 10, 
-                            repeats = 10,
-                            adaptive = list(min = 5, alpha = 0.05, 
-                                            method = 'BT', complete = T),
-                            classProbs = T,
-                            summaryFunction = mnLogLoss,
-                            search = 'random')
+#
+# xgbtree_5_2_5_2
+#
 
+#
+# xgbtree_5_3_5_2
+#
 
+#
+# xgbtree_5_3_5_3
+#
 
-# XGBoost - eXtreme Gradient Boosting
+#
+# xgbtree_5_5_5_5
+#
 
-# Tree
-set.seed(2019)
-xgbTreeModel <- train(x = x_train, 
-                      y = y_train,
-                      method = 'xgbTree', 
-                      metric = "logLoss", 
-                      trControl = adaptBTCtrl, 
-                      tuneLength = 15)
-write.xlsx(data.frame(xgbTreeModel$bestTune), file = "data/param_tuning/xgbTreeModel.xlsx", sheetName = "sheet1", row.names = F)
-if (nrow(xgbTreeModel$results)) write.xlsx(data.frame(xgbTreeModel$results), file = "data/param_tuning/xgbTreeModel.xlsx", sheetName = "sheet2", append = T, row.names = F)
+#
+# lgbm_3_2_3_2
+#
+system.time({
+  set.seed(2019)
+  lgbm_3_2_3_2 <- train(x = x_train, 
+                        y = y_train, 
+                        method = caretModel.LGBM(), 
+                        trControl = trainControl(
+                          method = 'adaptive_cv', 
+                          number = 3, 
+                          repeats = 2, 
+                          adaptive = list(min = 3, alpha = 0.05, method = 'gls', complete = T),
+                          classProbs = T, summaryFunction = mnLogLoss,
+                          verboseIter = T, returnData = F, returnResamp = 'none', allowParallel = F, search = 'random'), 
+                        metric = 'logLoss',
+                        verbosity = -1,
+                        tuneLength = 2)
+})
+write.xlsx(data.frame(lgbm_3_2_3_2$bestTune), file = "data/param_tuning/lgbm_3_2_3_2.xlsx", sheetName = "sheet1", row.names = F)
+if (nrow(lgbm_3_2_3_2$results)) write.xlsx(data.frame(lgbm_3_2_3_2$results), file = "data/param_tuning/lgbm_3_2_3_2.xlsx", sheetName = "sheet2", append = T, row.names = F)
 
+#
+# lgbm_5_2_5_2
+#
+system.time({
+  set.seed(2019)
+  lgbm_5_2_5_2 <- train(x = data.frame(idx = 1:nrow(x_train)), # index 
+                       y = y_train, 
+                       matrix = Matrix(as.matrix(x_train), sparse = T),
+                       method = caretModel.LGBM.sparse(), 
+                       trControl = trainControl(
+                         method = 'adaptive_cv', 
+                         number = 3, 
+                         repeats = 2, 
+                         adaptive = list(min = 3, alpha = 0.05, method = 'gls', complete = T),
+                         classProbs = T, summaryFunction = mnLogLoss,
+                         verboseIter = T, returnData = F, returnResamp = 'none', allowParallel = F, search = 'random'),
+                       metric = 'logLoss', 
+                       verbosity = -1,
+                       tuneLength = 2)
+})
+write.xlsx(data.frame(lgbm_5_2_5_2$bestTune), file = "data/param_tuning/lgbm_5_2_5_2.xlsx", sheetName = "sheet1", row.names = F)
+if (nrow(lgbm_5_2_5_2$results)) write.xlsx(data.frame(lgbm_5_2_5_2$results), file = "data/param_tuning/lgbm_5_2_5_2.xlsx", sheetName = "sheet2", append = T, row.names = F)
 
-# Linear Model
-set.seed(2019)
-xgbLinearModel <- train(x = x_train, 
-                        y = y_train,
-                        method = 'xgbLinear', 
-                        metric = "logLoss", 
-                        trControl = adaptBTCtrl, 
-                        tuneLength = 15)
-write.xlsx(data.frame(xgbLinearModel$bestTune), file = "data/param_tuning/xgbLinearModel.xlsx", sheetName = "sheet1", row.names = F)
-if (nrow(xgbLinearModel$results)) write.xlsx(data.frame(xgbLinearModel$results), file = "data/param_tuning/xgbLinearModel.xlsx", sheetName = "sheet2", append = T, row.names = F)
+#
+# lgbm_3_2_3_2
+#
 
+#
+# lgbm_3_2_3_2
+#
 
-# Dropouts meet Multiple Additive Regression Trees
-set.seed(2019)
-xgbDARTModel <- train(x = x_train, 
-                      y = y_train,
-                      method = 'xgbDART', 
-                      metric = "logLoss", 
-                      trControl = adaptBTCtrl, 
-                      tuneLength = 15)
-write.xlsx(data.frame(xgbDARTModel$bestTune), file = "data/param_tuning/xgbDARTModel.xlsx", sheetName = "sheet1", row.names = F)
-if (nrow(xgbDARTModel$results)) write.xlsx(data.frame(xgbDARTModel$results), file = "data/param_tuning/xgbDARTModel.xlsx", sheetName = "sheet2", append = T, row.names = F)
+#
+# lgbm_3_2_3_2
+#
 
+#
+# lgbm_3_2_3_2
+#
 
-# H2O Gradient Boosting Machines 
+#
+# lgbm_3_2_3_2
+#
 
-# Setup
-# h2o.init()
-# options('h2o.use.data.table' = T)
-# x_train_h2o <- as.h2o(x_train)
-# y_train_h2o <- factor(make.names(y_train))
-# rm(list = c('x_train', 'y_train'))
+#
+# lgbm_3_2_3_2
+#
 
-# Default GBM
-# set.seed(2019)
-# gbmModel <- train(x = x_train_h2o, 
-#                   y = y_train_h2o,
-#                   method = 'gbm_h2o', 
-#                   metric = "logLoss", 
-#                   trControl = adaptBTCtrl, 
-#                   tuneLength = 15)
+#
+# lgbm_3_2_3_2
+#
 
-# gbmPred <- predict(gbmModel, x_train_h2o)
-
-# Save results
-# fwrite(data.table(gbmPred), 'data/prediction/gbmModelPred.csv')
-# write.xlsx(data.frame(gbmModel$results),
-#            file = "data/param_tuning/gbmModel.xlsx", sheetName = "sheet1", row.names = F)
-# write.xlsx(data.frame(gbmModel$bestTune),
-#            file = "data/param_tuning/gbmModel.xlsx", sheetName = "sheet2", append = T, row.names = F)
-
-
-# TODO: 
-# svmLinear3
-# lssvmLinear 
-# lssvmPoly
-# svmBoundrangeString
-# svmExpoString
-# svmLinear
-# svmPoly
-# svmRadial
-# svmRadialCost
-# svmRadialSigma
-# svmSpectrumString
-# RSofia SGD - Not caret
-
-
-# TODO: 
-# ranger
-# Random Forest by Randomization
-# Random Ferns
+#
+# lgbm_3_2_3_2
+#
 
 
-# TODO: 
-# Sparse LDA
-# Penalized LDA
-# Bagged FDA
+
+# TODO: SVM with coordinate gradient descent
+system.time({
+  set.seed(2019)
+  lsvm <- LiblineaR(data = x_train, target = y_train, verbose = F, 
+                               cross = 5, findC = T)
+})
+write.xlsx(data.frame(lsvm), file = "data/param_tuning/lsvm_5.xlsx", sheetName = "sheet1", row.names = F)
 
 
-# TODO: 
-# Nearest Shrunken Centroids
+
 
 
 

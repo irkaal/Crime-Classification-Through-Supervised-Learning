@@ -1,14 +1,14 @@
 
 # Data cleaning wrapper
-preProcess <- function(dataset) {
+preProcess <- function(dataset, centerScale = F) {
   source('misc.R')
-  source('outlier_detection.R')
+  source('outlier_handler.R')
   loadPackages(c('data.table', 'reticulate'))
   # Handle Outliers
   dataset <- handleOutliers(dataset, write = F)
   # Main cleaning task
   source_python('dataCleaning.py')
-  dataset <- as.data.table(mainClean(dataset))
+  dataset <- as.data.table(mainClean(dataset, centerScale))
   return(dataset)
 }
 
@@ -16,7 +16,7 @@ preProcess <- function(dataset) {
 # Return NULL as rpy2 is unable to convert R dataframe back to Pandas dataframe
 preProcessPy <- function(dataset) {
   source('misc.R')
-  source('outlier_detection.R')
+  source('outlier_handler.R')
   loadPackages('data.table')
   dataset <- as.data.table(dataset)
   # Handle Outliers
