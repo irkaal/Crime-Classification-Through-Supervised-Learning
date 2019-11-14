@@ -7,8 +7,8 @@ preProcess <- function(dataset, centerScale = F) {
   # Handle Outliers
   dataset <- handleOutliers(dataset, write = F)
   # Main cleaning task
-  source_python('dataCleaning.py')
-  dataset <- as.data.table(mainClean(dataset, centerScale))
+  source_python('data_cleaning.py')
+  dataset <- as.data.table(main_clean(dataset, centerScale))
   return(dataset)
 }
 
