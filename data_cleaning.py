@@ -144,7 +144,8 @@ def start(total):
     # return time.time()
 
 def end():
-    global tic
+    global i, tic
+    i = max_i
     update_progress('Done') 
     print(f'\nElapsed time: {round(time.time() - tic, 3)} second(s)', flush = True)
 
