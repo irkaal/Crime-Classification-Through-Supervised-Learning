@@ -2,10 +2,6 @@
 .Rproj.user
 .RHistory
 *.Rproj
-*.jl.cov
-*.jl.*.cov
-*.jl.mem
-deps/deps.jl
 *.csv
 
 # Byte-compiled / optimized / DLL files
