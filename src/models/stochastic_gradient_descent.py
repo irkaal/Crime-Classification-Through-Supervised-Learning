@@ -32,7 +32,7 @@ parameters = {
 # Log loss measure
 grid_search = GridSearchCV(estimator = SGDClassifier(), param_grid = parameters, scoring = 'neg_log_loss',
                            cv = skf, n_jobs = -1, refit = False, verbose = 2)
-grid_search.fit(logistic_train, y_train)
+grid_search.fit(X_train, y_train)
 print(pd.DataFrame(grid_search.cv_results_))
 
 # Accuracy measure
