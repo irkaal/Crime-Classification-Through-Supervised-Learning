@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold
 from zipfile import ZipFile
