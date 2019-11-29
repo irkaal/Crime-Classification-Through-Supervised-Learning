@@ -17,8 +17,8 @@ def handle_outliers(dataset, avg_XY = None):
     # Replace the incorrect coordinates using factor index
     replace_filter = np.logical_and(dataset['Address'].isin(match['Address']), outlier_filter)
     replace_index = pd.factorize(dataset[replace_filter]['Address'], sort = True)[0]
-    dataset['X'].loc[replace_filter] = match['X'].iloc[replace_index].values
-    dataset['Y'].loc[replace_filter] = match['Y'].iloc[replace_index].values
+    dataset.loc[replace_filter, 'X'] = match.loc[replace_index, 'X'].values
+    dataset.loc[replace_filter, 'Y'] = match.loc[replace_index, 'Y'].values
 
     # Update outliers
     filter_X = np.logical_or(dataset['X'] < min_X, dataset['X'] > max_X)
@@ -33,7 +33,7 @@ def handle_outliers(dataset, avg_XY = None):
         avg_XY = non_outlier.groupby('PdDistrict')[['X', 'Y']].mean()
     # Replace the incorrect coordinates
     replace_index = pd.factorize(outlier['PdDistrict'], sort = True)[0]
-    dataset['X'].loc[outlier_filter] = avg_XY['X'].iloc[replace_index].values
-    dataset['Y'].loc[outlier_filter] = avg_XY['Y'].iloc[replace_index].values
+    dataset.loc[outlier_filter, 'X'] = avg_XY['X'].values[replace_index]
+    dataset.loc[outlier_filter, 'Y'] = avg_XY['Y'].values[replace_index]
     
     return dataset, avg_XY
