@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-import src.utilities.feature_engineering as fe
+import utilities.feature_engineering as fe
 
 
 def main_clean(dataset, center_scale = False):
