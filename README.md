@@ -1,8 +1,7 @@
 # Crime Classification in San Francisco
-
-## Objective
 Predict the category of crimes that occurred in the city by the bay!
 
+## Overview
 Before San Francisco’s technological and financial upturn, there was actually a high rate in criminal activities. In this Application Bake Off project, we have over 12 years of crime reports from across all of San Fran's neighborhoods, and we are going to compare and analyze different ML models’ abilities to predict the category of crime given various features.
 
 
