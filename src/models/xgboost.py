@@ -40,7 +40,7 @@ def optimize(max_evals):
         'max_depth': hp.choice('max_depth', [11, 12, 13, 14]),
         'subsample': hp.quniform('subsample', 0.6, 0.8, 0.05),
         'colsample_bytree': hp.quniform('colsample_bytree', 0.7, 0.9, 0.05),
-        # 'tree_method': 'hist',
+        #'tree_method': 'hist',
         'eta': hp.quniform('eta', 0.04, 0.06, 0.01),
         'min_child_weight': hp.quniform('min_child_weight', 2, 4, 1),
         'alpha' : hp.quniform('alpha', 4, 6, 1),

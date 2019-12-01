@@ -14,7 +14,7 @@ result_tuple <- handle_outliers(train_data)
 train_data <- result_tuple[[1]]
 avg_XY <- result_tuple[[2]]
 
-train_data <- main_clean(train_data)
+train_data <- main_clean(train_data, center_scale = F)
 
 train_data$Descript <- train_data$Resolution <- NULL
 train_data <- as.data.table(train_data)
@@ -34,5 +34,5 @@ X_train <- train_data[, -which(names(train_data) == 'Category'), with = F]
 path <- unzip('../data/raw/sf-crime.zip', 'test.csv')
 test_data <- fread(path); invisible(file.remove(path))
 test_data <- handle_outliers(test_data, avg_XY)[[1]] 
-test_data <- main_clean(test_data)
+test_data <- main_clean(test_data, center_scale = F)
 test_data <- as.data.table(test_data)

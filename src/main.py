@@ -21,7 +21,7 @@ train_data = result_tuple[0]
 train_data.describe()
 
 # Data pre-processing and feature Engineering
-train_data = dc.main_clean(train_data)
+train_data = dc.main_clean(train_data, center_scale = False)
 
 # Prepare data for training
 category = pd.factorize(train_data['Category'], sort = True)
@@ -43,7 +43,7 @@ test_data.describe()
 # Handle X and Y outliers using the mean coordinates obtained from train data
 avg_XY = result_tuple[1]
 test_data = oh.handle_outliers(test_data, avg_XY)[0]
-test_data = dc.main_clean(test_data)
+test_data = dc.main_clean(test_data, center_scale = False)
 test_data.describe()
 
 # Prediction

@@ -3,20 +3,16 @@ import pandas as pd
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold
-from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
 from zipfile import ZipFile
 
 
 # Load data
-train_data = pd.read_csv(ZipFile('data/processed/train.zip').open('train.csv'))
-X_train = train_data.drop(['Category',
+train_data = pd.read_csv(ZipFile('data/processed/train_centered.zip').open('train.csv'))
+X_train = train_data.drop(['Category'], axis = 1) 
                         #    '2010-2012', '06:00-17:59', 
                         #    'PdDistrict_TARAVAL', 'Patrol_Division',
                         #    'Polar_Rho', 'Polar_Phi', 'X_R30', 'Y_R30', 'X_R60', 'Y_R60', 'XY_PCA1', 'XY_PCA2'], axis = 1)
-X_train_columns = X_train.columns
-scaler = StandardScaler().fit(X_train)
-X_train = pd.DataFrame(scaler.transform(X_train), columns = X_train_columns)
 category = pd.factorize(train_data['Category'], sort = True)
 y_train = category[0]
 
@@ -47,14 +43,14 @@ pd.set_option('display.max_columns', 30)
 skf = RepeatedStratifiedKFold(n_splits = 2, n_repeats = 1, random_state = 2019)
 calibrated_LinearSVC_SGD = CalibratedClassifierCV(base_estimator = SGDClassifier(), method = 'sigmoid', cv = 2)
 parameters = {
-    'base_estimator__loss': ['hinge'],
+    'base_estimator__loss': ['hinge', 'squared_hinge'],
     'base_estimator__alpha': [0.01], 
     'base_estimator__penalty': ['l1', 'l2'],
     'base_estimator__tol': [1e-3],
     'base_estimator__fit_intercept': [True, False], 
     'base_estimator__verbose': [0],
     'base_estimator__random_state': [2019],
-    'base_estimator__max_iter': [5000]
+    'base_estimator__max_iter': [1000]
 }
 grid_search = GridSearchCV(estimator = calibrated_LinearSVC_SGD, param_grid = parameters, scoring = 'neg_log_loss',
                            cv = skf, n_jobs = -1, refit = False, verbose = 2)
@@ -69,8 +65,6 @@ X_test = X_test.drop(['Id'], axis = 1)
                     #  '2010-2012', '06:00-17:59', 
                     #  'PdDistrict_TARAVAL', 'Patrol_Division',
                     #  'Polar_Rho', 'Polar_Phi', 'X_R30', 'Y_R30', 'X_R60', 'Y_R60', 'XY_PCA1', 'XY_PCA2'], axis = 1)
-X_test_columns = X_test.columns
-X_test = pd.DataFrame(scaler.transform(X_test), columns = X_test_columns)
 clf = CalibratedClassifierCV(
     LinearSVC(loss = 'hinge', penalty = 'l2', dual = True, tol = 1e-4, 
               C = 1.0, fit_intercept = True, verbose = 0, random_state = 2019, max_iter = 1000), 
