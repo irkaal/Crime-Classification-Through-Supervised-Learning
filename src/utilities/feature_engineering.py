@@ -121,16 +121,6 @@ def insert_nearest_station_bearing(dataset):
     dataset['Nearest_Station_Bearing'] = bearing(x, y, x_station[min_index], y_station[min_index])
     return dataset
 
-def center_and_scale(dataset):
-    if 'Category' in dataset:
-        label = dataset['Category']
-        dataset = dataset.drop(columns = ['Category'])
-    data_scaled = StandardScaler().fit_transform(dataset)
-    dataset = pd.DataFrame(data_scaled, columns = dataset.columns)
-    if 'Category' in dataset:
-        dataset['Category'] = label
-    return dataset
-
 # Helper functions
 
 # Encoding to preserve cyclical properties
