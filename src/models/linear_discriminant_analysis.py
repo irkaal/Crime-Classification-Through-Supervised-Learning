@@ -11,6 +11,9 @@ X_train = train_data.drop(['Category',
                            '2010-2012', '06:00-17:59', 
                            'PdDistrict_TARAVAL', 'Patrol_Division',
                            'Polar_Rho', 'Polar_Phi', 'X_R30', 'Y_R30', 'X_R60', 'Y_R60', 'XY_PCA1', 'XY_PCA2'], axis = 1)
+X_train_columns = X_train.columns
+scaler = StandardScaler().fit(X_train)
+X_train = pd.DataFrame(scaler.transform(X_train), columns = X_train_columns)
 category = pd.factorize(train_data['Category'], sort = True)
 y_train = category[0]
 
@@ -24,13 +27,7 @@ parameters = {
     'n_components': [None],
     'tol': [1e-4]
 }
-# Log loss measure
 grid_search = GridSearchCV(estimator = LinearDiscriminantAnalysis(), param_grid = parameters, scoring = 'neg_log_loss',
-                            cv = skf, n_jobs = -1, refit = False, verbose = 2)
-grid_search.fit(X_train, y_train)
-print(pd.DataFrame(grid_search.cv_results_))
-# Accuracy measure
-grid_search = GridSearchCV(estimator = LinearDiscriminantAnalysis(), param_grid = parameters, scoring = 'accuracy',
                             cv = skf, n_jobs = -1, refit = False, verbose = 2)
 grid_search.fit(X_train, y_train)
 print(pd.DataFrame(grid_search.cv_results_))
@@ -43,6 +40,8 @@ X_test = X_test.drop(['Id',
                      '2010-2012', '06:00-17:59', 
                      'PdDistrict_TARAVAL', 'Patrol_Division',
                      'Polar_Rho', 'Polar_Phi', 'X_R30', 'Y_R30', 'X_R60', 'Y_R60', 'XY_PCA1', 'XY_PCA2'], axis = 1)
+X_test_columns = X_test.columns
+X_test = pd.DataFrame(scaler.transform(X_test), columns = X_test_columns)
 clf = LinearDiscriminantAnalysis()
 clf.fit(X_train, y_train)
 pred_proba = clf.predict_proba(X_test)
