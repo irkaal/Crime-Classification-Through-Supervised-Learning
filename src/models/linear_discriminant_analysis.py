@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold
+from sklearn.preprocessing import StandardScaler
 from zipfile import ZipFile
 
 

@@ -46,10 +46,8 @@ parameters = {
     'penalty': ['l2'], 
     'alpha': [0.01], 
     'fit_intercept': [False], 
-    'max_iter': [5000], 
-    'tol': [1e-3], 
-    'random_state': [2019], 
-    'class_weight': [None]
+    'max_iter': [5000],
+    'random_state': [2019]
 }
 
 # Log loss measure
