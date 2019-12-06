@@ -37,7 +37,7 @@ print(pd.DataFrame(grid_search.cv_results_))
 X_test = pd.read_csv(ZipFile('data/processed/test.zip').open('test.csv'))
 crime_id = X_test['Id']
 X_test = X_test.drop(['Id', 
-                      '2003-2005', '2013-2016', '00:00-05:59', '18:00-23:59', '06:00-17:59',
+                      '2003-2005', '2013-2016', '0000-0559', '1800-2359', '0600-1759',
                       'Polar_Rho', 'Polar_Phi', 'XY_PCA1', 'XY_PCA2',
                       'Patrol_Division', 
                       'PdDistrict_BAYVIEW', 'PdDistrict_CENTRAL', 'PdDistrict_INGLESIDE', 'PdDistrict_MISSION', 'PdDistrict_NORTHERN', 

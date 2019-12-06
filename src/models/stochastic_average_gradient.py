@@ -36,10 +36,7 @@ print(pd.DataFrame(grid_search2.cv_results_))
 # Prediction
 X_test = pd.read_csv(ZipFile('data/processed/test.zip').open('test.csv'))
 crime_id = X_test['Id']
-X_test = X_test.drop(['Id'], axis = 1) 
-                    #  '2010-2012', '06:00-17:59', 
-                    #  'PdDistrict_TARAVAL', 'Patrol_Division',
-                    #  'Polar_Rho', 'Polar_Phi', 'X_R30', 'Y_R30', 'X_R60', 'Y_R60', 'XY_PCA1', 'XY_PCA2'], axis = 1)
+X_test = X_test.drop(['Id'], axis = 1)
 X_test_columns = X_test.columns
 X_test = pd.DataFrame(scaler.transform(X_test), columns = X_test_columns)
 clf = LogisticRegression(solver = 'sag', tol = 1e-4, C = 0.1, max_iter = 5000, multi_class = 'multinomial', verbose = 2, random_state = 2019, n_jobs=-1)
