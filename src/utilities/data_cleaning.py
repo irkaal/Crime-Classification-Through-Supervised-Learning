@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-import utilities.feature_engineering as fe
+import src.utilities.feature_engineering as fe
 
 
-def main_clean(dataset):
+def main_clean(dataset, pca_fit = None):
     # PdDistrict
     # One-hot encoding
     dataset = fe.encode_district(dataset)
@@ -48,7 +48,9 @@ def main_clean(dataset):
     # Rotation by 60 degrees
     dataset = fe.insert_rotation(dataset, degrees = 60)
     # Rotation by PCA
-    dataset = fe.insert_pca_rotation(dataset)
+    pca_tuple = fe.insert_pca_rotation(dataset, pca_fit)
+    dataset = pca_tuple[0]
+    pca_fit = pca_tuple[1]
 
     # Nearest Police Station Distance
     dataset = fe.insert_nearest_station(dataset)
@@ -59,4 +61,4 @@ def main_clean(dataset):
     # Remove unused columns from dataframe
     dataset = dataset.drop(columns = ['PdDistrict', 'Address', 'DayOfWeek', 'Dates'])
 
-    return dataset
+    return dataset, pca_fit

@@ -75,10 +75,12 @@ def insert_rotation(dataset, degrees):
     dataset['Y_R' + str(degrees)] = rotated_y
     return dataset
 
-def insert_pca_rotation(dataset):
-    pca_trans = PCA().fit_transform(dataset[['X','Y']])
+def insert_pca_rotation(dataset, pca_fit = None):
+    if pca_fit is None:
+        pca_fit = PCA().fit(dataset[['X','Y']])
+    pca_trans = pca_fit.transform(dataset[['X','Y']])
     pca_df = pd.DataFrame(data = pca_trans, columns = ['XY_PCA1', 'XY_PCA2'])
-    return dataset.join(pca_df)
+    return dataset.join(pca_df), pca_fit 
 
 def insert_nearest_station(dataset):
     x, y = dataset['X'], dataset['Y']
