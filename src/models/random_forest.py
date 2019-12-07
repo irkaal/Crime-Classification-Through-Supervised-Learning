@@ -62,10 +62,9 @@ best_param = optimize(max_evals = 2)
 X_test = pd.read_csv(ZipFile('data/processed/test.zip').open('test.csv'))
 crime_id = X_test['Id']
 X_test = X_test.drop(['Id'], axis = 1)
-clf = RandomForestClassifier(max_depth = 10, max_features = 'auto', max_leaf_nodes = None, 
-                             min_impurity_decrease = 0.0, min_impurity_split = None, 
-                             min_samples_leaf = 1, min_samples_split = 2, min_weight_fraction_leaf = 0.0, 
-                             n_estimators = 100, n_jobs = -1, random_state = 2019)
+clf = RandomForestClassifier(max_depth = 17, max_features = 'auto', min_samples_leaf = 7, 
+                             min_samples_split = 4, min_weight_fraction_leaf = 0.0, 
+                             n_estimators = 1000, n_jobs = -1, random_state = 2019, verbose=2)
 clf.fit(X_train, y_train)
 pred_proba = clf.predict_proba(X_test)
 result = pd.DataFrame(pred_proba)
