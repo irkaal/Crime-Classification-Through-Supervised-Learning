@@ -9,7 +9,7 @@ from zipfile import ZipFile
 # Load Data
 train_data = pd.read_csv(ZipFile('data/processed/train.zip').open('train.csv'))
 X_train = train_data.drop(['Category', 
-                           '2010-2012', '06:00-17:59', 
+                           '2010-2012', '0600-1759', 
                            'PdDistrict_TARAVAL', 'Patrol_Division',
                            'Polar_Rho', 'Polar_Phi', 'X_R30', 'Y_R30', 'X_R60', 'Y_R60', 'XY_PCA1', 'XY_PCA2'], axis = 1)
 X_train_columns = X_train.columns
@@ -62,7 +62,7 @@ print(pd.DataFrame(grid_search.cv_results_))
 X_test = pd.read_csv(ZipFile('data/processed/test.zip').open('test.csv'))
 crime_id = X_test['Id']
 X_test = X_test.drop(['Id', 
-                     '2010-2012', '06:00-17:59', 
+                     '2010-2012', '0600-1759', 
                      'PdDistrict_TARAVAL', 'Patrol_Division',
                      'Polar_Rho', 'Polar_Phi', 'X_R30', 'Y_R30', 'X_R60', 'Y_R60', 'XY_PCA1', 'XY_PCA2'], axis = 1)
 X_test_columns = X_test.columns
