@@ -4,7 +4,7 @@ Predict the category of crimes that occurred in San Francisco
 ## Overview
 Before San Francisco’s technological and financial upturn, there was actually a high rate in criminal activities. In this Application Bake Off project, we have over 12 years of crime reports from across all of San Francisco's neighborhoods, and we compare various Machine Learning algorithms and their abilities to predict crime based on time and location 
 
-![poster](./poster/presentation-poster.png)
+![poster](./sf-crime.png)
 
 ## Languages & Libraries
 * [Python](https://www.python.org)
