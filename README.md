@@ -1,4 +1,4 @@
-# Crime Classification Through Supervised Learning 
+# San Francisco Crime Classification 
 Predict the category of crimes that occurred in San Francisco
 
 ## Overview
